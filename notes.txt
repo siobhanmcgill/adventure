@@ -1,0 +1,102 @@
+Actions:
+* Look
+* Use
+* Pickup
+* Talk
+
+action{state}: sets a certain action only while that state is active in the current room
+
+Inventory items have a "grab" icon which binds the item to the cursor. Then the user clicks on
+something else to use that thing on the other thing.
+
+SCHEMAS:
+
+// A single string will make the Protagonist show that message.
+// An array shows one dialog after another.
+type Quote: string|string[]
+
+interface Action {
+    // The Protagonist will say something.
+    quote?: Quote;
+    // Trigger a popup defined in popups.json
+    // Popup opens after the quote is done.
+    popup?: string;
+    // Remove a state from the current room
+    removeState?: string;
+    // Add a state to the current room
+    addState?: string;
+    // Actions will be taken in order every time a user takes the action
+    queue?: Action[];
+    onQueueFinish?: Action;
+    // Adds an inventory item with the given ID.
+    addItem?: string;
+    // Play an animation - this will play after the quote shows, but before anything else is set.
+    animation?: string;
+    quoteAfterAnimation?: Quote;
+    // Removes an inventory item with the given ID.
+    removeItem?: string;
+}
+
+interface StateList {
+    // The state ID is applied as a class to the SVG.
+    [stateId: string] {
+        // These messages will show on an interval
+        idle?: Quote
+    }
+}
+
+interface ItemList {
+    [itemId: string] {
+        // If not set, the item ID will be used
+        name?: string
+
+        // If string or string[] it will be treated as a quote
+        [action | action{state}]: string|string[]|Action
+
+        // What happens if the user uses the given inventory item on this.
+        [use#[item ID]]: Action
+    }
+}
+
+interface RoomInit {
+    states: string[],
+}
+
+interface RoomList {
+    [roomId: string]: {
+        init: RoomInit,
+        states: StateList,
+        // Text shown when the Protagonist enters the room.
+        enter: Quote,
+
+        protagonist: {
+            // What happens if the user uses the given inventory item on the protagonist.
+            [use#[item ID]]: Action
+        }
+
+        [enter{state}]: Quote,
+        items: ItemList,
+    }
+}
+
+
+POPUPS:
+
+interface PopupList {
+    [popupId]: {
+        quote: Quote;
+        text: string;
+        quoteAfter: Quote;
+    }
+}
+
+
+ITEMS:
+
+interface InventoryItemList {
+    [item ID]: {
+        description: string;
+
+        [use#[item ID]]: Action
+    }
+}
