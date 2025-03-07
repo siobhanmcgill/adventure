@@ -1,0 +1,1 @@
+export const LOOK_FALLBACK = 'I don\'t see anything special.';

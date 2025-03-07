@@ -1,0 +1,14 @@
+{
+  "devDependencies": {
+    "@parcel/transformer-sass": "^2.13.3",
+    "parcel": "^2.13.3",
+    "typescript": "^5.8.2"
+  },
+  "scripts": {
+    "build": "tsc",
+    "run": "parcel src/index.html -p 1919 --open"
+  },
+  "dependencies": {
+    "rxjs": "^7.8.2"
+  }
+}
