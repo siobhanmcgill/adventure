@@ -56,7 +56,7 @@ export interface Room {
   init: RoomInit;
   states: StateList;
   // The SVG markup to draw this room.
-  artwork: string;
+  // artwork: string;
   // Text shown when the Protagonist enters the room.
   enter: {[state: string]: Quote;}|Quote;
 

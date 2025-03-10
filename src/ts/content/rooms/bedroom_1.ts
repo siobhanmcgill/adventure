@@ -29,7 +29,15 @@ export const bedroom_1: Room = {
       'pickup':
           'As much as I\'d love to throw that thing out the window, I better leave it there so I can go through this again tomorrow.'
     },
-    'bed': {'look': 'It\'s a bed. It\'s as uncomfortable as it is empty.'},
+    'bed': {
+      'look': 'It\'s a bed. It\'s as uncomfortable as it is empty.',
+      'use{alarm_on}': 'Not with the alarm blaring like that.',
+      'use': 'I wish I could, but I really need to find some work.',
+      'talk': [
+        'Yep, just me standing here alone talking to an empty bed.',
+        'I\'m doing great.'
+      ]
+    },
     'picture': {
       'look': 'It\'s a picture of my ex-wife. She looks happy.',
       'pickup':
@@ -58,7 +66,10 @@ export const bedroom_1: Room = {
     'pills': {
       'look': 'My favorite little blue pills.',
       'use': 'I can\'t really take them without water.',
-      'pickup': {'quote': 'Come here, darling.', 'addItem': 'pill'},
+      'pickup': {
+        'quote': 'Come here, darling.',
+        'addItem': 'pill',
+      },
       'talk': 'I\'m not crazy enough to talk to my pills just yet.'
     },
     'mirror': {
@@ -74,11 +85,17 @@ export const bedroom_1: Room = {
       'pickup': 'Um, no, I can\'t pick up a window.',
       'talk': 'Hello, world.'
     },
+    'cross': {
+      'look': 'It was my mom\'s. I don\'t really put much stock in it.',
+      'use': 'I forgot the Lord\'s prayer a long time ago.',
+      'talk': 'Uh, "Hail Satan," I guess.',
+      'pickup': 'People are going to think I\'m some kind of religious nut.'
+    },
     'capsules': {
       'name': 'TCH Capsules',
       'look': [
         'They\'re all empty. I guess I\'m going to have to start feeling my feelings.',
-        '', 'Yeah, I better go to Cade\'s today and get some more.'
+        '...', 'Yeah, I better go to Cade\'s today and get some more.'
       ],
       'pickup': {
         'quote': 'I guess I might as well clean up after myself.',
@@ -137,101 +154,4 @@ export const bedroom_1: Room = {
       'use': 'Nobody animated me sitting down yet.'
     }
   },
-  artwork: `
-  <g
-     inkscape:label="room"
-     inkscape:groupmode="layer"
-     id="layer1"
-     style="display:inline">
-    <path
-       style="fill:#0b005c;fill-opacity:1;stroke:#000000;opacity:1"
-       d="M 2.5084831,765.64206 131.02725,578.31873 h 757.5235 l 134.56145,189.30151 z"
-       id="floor" />
-    <path
-       style="display:inline;opacity:1;fill:#e1d1d1;fill-opacity:1;stroke:#000000"
-       d="m 131.29938,577.81983 757.60026,2.27822 V 41.52778 L 130.40623,41.22425 Z"
-       id="path8933" />
-    <path
-       style="opacity:1;fill:#e7d9d9;fill-opacity:1;stroke:#000000"
-       d="M 0.81290202,768.81343 1.1443428,-0.00348885 131.3552,41.049808 V 580.21318 Z"
-       id="path3093" />
-    <path
-       style="opacity:1;fill:#a67272;fill-opacity:1;stroke:#000000"
-       d="M 132.05995,40.857921 888.788,41.25565 1022.5679,1.5909155 H 0.49541668 Z"
-       id="path8011" />
-    <path
-       style="opacity:1;fill:#e1d1d1;fill-opacity:1;stroke:#000000"
-       d="M 888.89615,41.751067 V 579.66417 L 1023.6421,766.89039 1022.9657,1.1931867 Z"
-       id="path8391"
-       sodipodi:nodetypes="ccccc" />
-  </g>
-  <g
-     inkscape:groupmode="layer"
-     id="bed"
-     inkscape:label="bed">
-    <path
-       style="opacity:1;fill:#c8eae7;fill-opacity:1;stroke:#000000"
-       d="m 759.05176,695.59887 -79.46861,-117.15169 1.78391,-103.58415 205.9706,4.72816 86.67518,101.25196 1.78391,116.45341 z"
-       id="path8939"
-       sodipodi:nodetypes="ccccccc"
-       inkscape:label="hover" />
-    <path
-       style="opacity:1;fill:#e1d1d1;fill-opacity:0;stroke:#000000"
-       d="M 974.47382,581.62873 765.17405,578.06364 681.36568,476.49798"
-       id="path8941"
-       sodipodi:nodetypes="ccc" />
-    <path
-       style="display:inline;opacity:1;fill:#e1d1d1;fill-opacity:1;stroke:#000000"
-       d="M 766.35082,579.53659 759.21791,696.3746"
-       id="path8943"
-       sodipodi:nodetypes="cc" />
-  </g>
-  <g
-     inkscape:groupmode="layer"
-     id="layer4"
-     inkscape:label="nightstand">
-    <path
-       style="opacity:1;fill:#ecf2c0;fill-opacity:1;stroke:#000000"
-       d="m 570.94666,577.98634 2.16529,-146.65939 h 106.97458 l 30.3472,30.34721 -4.33389,162.30385 -107.02675,-0.0455 z"
-       id="path9324"
-       sodipodi:nodetypes="ccccccc" />
-    <path
-       style="opacity:1;fill:#ecf2c0;fill-opacity:1;stroke:#000000"
-       d="m 574.61074,433.41929 26.28518,29.08296 109.43171,-0.90436"
-       id="path10562"
-       sodipodi:nodetypes="ccc" />
-    <path
-       style="opacity:1;fill:#ecf2c0;fill-opacity:1;stroke:#000000"
-       d="m 601.33496,463.3598 -2.0439,160.12844"
-       id="path10564"
-       sodipodi:nodetypes="cc" />
-  </g>
-  <g
-     inkscape:groupmode="layer"
-     id="clock"
-     inkscape:label="clock">
-    <path
-       style="opacity:1;fill:#283b28;fill-opacity:1;stroke:#000000"
-       d="m 626.39835,431.67263 v -35.31215 h 44.19764 l 11.31108,8.58476 -0.85887,37.73905 -44.79123,-0.85887 z"
-       id="path10567" />
-    <path
-       style="opacity:1;fill:#283b28;fill-opacity:1;stroke:#000000"
-       d="m 625.46594,395.87458 12.69131,10.30118 42.73861,-0.85756"
-       id="path10623" />
-    <path
-       style="opacity:1;fill:#283b28;fill-opacity:1;stroke:#000000"
-       d="m 637.4494,406.54872 -0.74461,34.49006"
-       id="path10625" />
-    <text
-       xml:space="preserve"
-       style="opacity:1;fill:#61f300;fill-opacity:1;stroke:#000000;stroke-opacity:0"
-       x="644.1991"
-       y="418.7478"
-       id="text10681"><tspan
-         sodipodi:role="line"
-         x="644.1991"
-         y="418.7478"
-         id="tspan10683">08:00</tspan></text>
-  </g>
-  `
 };

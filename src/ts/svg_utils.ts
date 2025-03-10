@@ -1,5 +1,7 @@
+import {onBodyClick, parseMarkdown} from './utils';
+
 export function getSvg(): SVGElement {
-  return document.querySelector('svg');
+  return document.querySelector('svg')!;
 }
 
 export function emptySvgElement(element: SVGElement) {
@@ -23,19 +25,22 @@ export function setSvgAttribute(
   svg.setAttribute(attr, value);
 }
 
+interface SvgAttributes {
+  text?: string;
+  d?: string;
+  [index: string]: unknown;
+  x?: number;
+  y?: number;
+  width?: number|'100%';
+  height?: number|'100%';
+  transform?: string;
+}
+
 /** Generate an SVG Element. */
 export function createSvgElement(
     name: string,
     className?: string,
-    attributes?: {
-      text?: string;
-      d?: string; [index: string]: unknown;
-      x?: number;
-      y?: number;
-      width?: number;
-      height?: number;
-      transform?: string;
-    },
+    attributes?: SvgAttributes,
     ): SVGElement {
   const el = document.createElementNS('http://www.w3.org/2000/svg', name);
   if (className) {
@@ -53,14 +58,28 @@ export function createSvgElement(
   return el;
 }
 
-export function printDialog(text: string) {
-  const dialogPane = document.querySelector('body > .dialog-pane')!.cloneNode();
-  dialogPane.textContent = text;
-
-  const container = createSvgElement('foreignObject', 'dialog-container', {
-    x: 50, y: 20, width: 500, height: 500
-  });
-  container.appendChild(dialogPane);
+export function injectHtmlFromTemplate(
+    templateClass: string, attributes?: SvgAttributes) {
+  const htmlObject =
+      document.querySelector(`.templates > ${templateClass}`)!.cloneNode(
+          true) as HTMLDivElement;
+  const container = createSvgElement(
+      'foreignObject', `${templateClass.replace('.', '')}-container`,
+      attributes);
+  container.appendChild(htmlObject);
   getSvg().appendChild(container);
+  return {container, htmlObject};
+}
 
+export function printDialog(text: string[]) {
+  const {container, htmlObject} =
+      injectHtmlFromTemplate('.quote', {x: 50, y: 20, width: 500, height: 500});
+  htmlObject.innerHTML = parseMarkdown(text.shift() ?? '');
+
+  onBodyClick(() => {
+    container.remove();
+    if (text.length) {
+      printDialog(text);
+    }
+  }, true);
 }

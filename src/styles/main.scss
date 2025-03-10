@@ -1,64 +1,189 @@
+@property --seed {
+  syntax: '<number>';
+  initial-value: 0.5;
+  inherits: false;
+}
+
+:root {
+  --seed: 0.5;
+}
+
 html,
 body {
-    background: black;
-    height: 100%;
+  background: black;
+  height: 100%;
+  font-family: "Handjet", monospace;
+  font-size: 30px;
+
+  input,
+  button {
+    font-family: "Handjet", monospace;
+    font-size: 30px;
+  }
+}
+
+.placeholder {
+  position: absolute;
+  left: -9999em;
 }
 
 .svg-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+}
+
+svg {
+  width: calc(100% - 20px);
+  max-width: 1024px;
+  aspect-ratio: 1.33;
+  background-color: #111122;
+  border-radius: 20px;
+
+  [inkscape\:label="blink"] {
+    animation: blink 300ms infinite;
+  }
+
+  g.room-object {
+    cursor: pointer;
+
+    &:hover {
+      [inkscape\:label="hover"] {
+        stroke-width: 3px;
+        stroke: black;
+      }
+    }
+  }
+
+  .quote {
+    display: inline-block;
+    border: 10px solid darkblue;
+    background: #DDDDDD;
+    color: black;
+    padding: 10px 15px;
+    border-radius: 5px;
+    font-weight: 400;
+    font-size: 30px;
+    min-height: 33px;
+  }
+
+  .input {
     display: flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
     width: 100%;
     height: 100%;
+
+    .quote {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 20px;
+    }
+
+    p {
+      margin: 0;
+    }
+
+    input {
+      display: block;
+      padding: 5px 10px;
+    }
+
+    button {
+      align-self: flex-end;
+      padding: 1px 10px;
+    }
+  }
+
+  .actions {
+    position: static;
+  }
 }
 
-svg {
-    width: calc(100% - 20px);
-    max-width: 1024px;
-    aspect-ratio: 1.33;
-    background-color: #111122;
-    border-radius: 20px;
-
-    g.room-object {
-        cursor: pointer;
-
-        &:hover {
-            [inkscape\:label="hover"] {
-                stroke-width: 3px;
-            }
-        }
-    }
-
-    .dialog-pane {
-        display: block;
-        border: 10px solid darkblue;
-        background: #DDDDDD;
-        color: black;
-        padding: 10px;
-        border-radius: 5px;
-        font-family: "Handjet", monospace;
-        font-weight: 400;
-        font-size: 30px;
-    }
-
-    .actions {
-        display: block;
-    }
+.quote {
+  display: none;
 }
 
-.dialog-pane {
-    display: none;
+.input {
+  display: none;
 }
 
 .actions {
-    display: none;
+  position: absolute;
+  top: -999em;
 
-    button {
-        font-size: 20px;
-        background: #DDD;
-        border-radius: 1px;
-        border: 2px solid #333;
-        padding: 2px 4px;
-        cursor: pointer;
+  button {
+    font-size: 20px;
+    background: #DDD;
+    border-radius: 1px;
+    border: 2px solid #333;
+    padding: 2px 4px;
+    cursor: pointer;
+  }
+}
+
+@keyframes blink {
+  0% {
+    opacity: 1;
+  }
+
+  45% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0;
+  }
+
+  95% {
+    opacity: 0;
+  }
+}
+
+
+// BEDROOM
+@keyframes air-car {
+  from {
+    transform: translate(372, 0);
+  }
+
+  to {
+    transform: translate(6072, 1250);
+  }
+}
+
+.bedroom_1 {
+
+  [inkscape\:label="alarm"],
+  [inkscape\:label="clock text bright"] {
+    opacity: 0;
+  }
+
+  &.alarm_on {
+    [inkscape\:label="clock text bright"] {
+      animation: blink 1s infinite;
     }
+  }
+
+  &.pants-picked-up {
+    #pants {
+      opacity: 0;
+    }
+  }
+
+  &.pill-picked-up {
+    #pill-to-pick-up {
+      opacity: 0;
+    }
+  }
+
+  [inkscape\:label="window"] {
+    [inkscape\:label="car"] {
+      animation: air-car 4s 1s infinite;
+    }
+  }
 }
