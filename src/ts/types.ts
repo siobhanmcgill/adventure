@@ -1,5 +1,13 @@
 export type Quote = string|string[];
 
+export interface SvgSource {
+  url: URL;
+  layerId?: string;
+  viewBox: string;
+  // Indicates the position in the artwork that is treated as the origin.
+  coords?: {x: number, y: number};
+}
+
 export interface Action {
   // The Protagonist will say something.
   quote?: Quote;
@@ -10,7 +18,7 @@ export interface Action {
   removeState?: string;
   // Add a state to the current room
   addState?: string;
-  // Actions will be taken in order every time a user takes the action
+  // Actions will be taken in order, once per time the user interacts.
   queue?: Action[];
   onQueueFinish?: Action;
   // Adds an inventory item with the given ID.
@@ -48,7 +56,10 @@ export interface RoomObjectList {
 
 // Data to set up a room.
 export interface RoomInit {
-  states: string[],
+  states: string[];
+  artwork: SvgSource;
+  styles: URL[];
+  protagonistScale: number;
 }
 
 export interface Room {
@@ -58,15 +69,12 @@ export interface Room {
   // The SVG markup to draw this room.
   // artwork: string;
   // Text shown when the Protagonist enters the room.
-  enter: {[state: string]: Quote;}|Quote;
-
-  // protagonist: {
-  //   // What happens if the user uses the given inventory item on the
-  //   // protagonist.
-  //   [use: string]: Action|Quote;
-  // };
+  enter: {
+    [from: string|'default']: {coords: {x: number; y: number}, quote: Quote}
+  };
 
   objects: RoomObjectList;
+  popups?: PopupList;
 }
 
 export interface RoomList {
@@ -76,7 +84,8 @@ export interface RoomList {
 // Will probably add artwork and coords
 export interface Popup {
   quote?: Quote;
-  text?: string;
+  popupStyle: string;
+  text: string;
   quoteAfter?: Quote;
 }
 
@@ -86,11 +95,13 @@ export interface PopupList {
 
 export interface InventoryItem {
   description?: string;
+  artwork: SvgSource;
 
   use?: {
     // Another Item ID, which if used with this item, triggers this action.
     // This could be dropped on it, or it can be dropped on this.
-    // Also includes the unique id 'protagonist' which is what happens if this is
+    // Also includes the unique id 'protagonist' which is what happens if this
+    // is
     // dropped on the protagonist.
     [itemId: string|'protagonist']: Quote|Action;
   };
@@ -98,4 +109,13 @@ export interface InventoryItem {
 
 export interface InventoryList {
   [itemId: string]: InventoryItem;
+}
+
+export interface CharacterStyle {
+  artwork: SvgSource;
+  styles?: URL[];
+}
+
+export interface Character {
+  [style: string]: CharacterStyle;
 }

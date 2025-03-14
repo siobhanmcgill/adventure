@@ -3,7 +3,7 @@
 
 <head>
   <meta charset="utf-8" />
-  <title>Game</title>
+  <title>Agency</title>
 
   <link rel="stylesheet"
         href="styles/main.scss" />
@@ -19,9 +19,30 @@
 </head>
 
 <body>
-  <div class="svg-wrapper">
-    <svg id="svg"></svg>
+  <div class="screen">
+    <div class="content-wrapper">
+      <svg id="svg"></svg>
+
+      <div class="inventory">
+        <div class="toggle-shadow">
+
+        </div>
+        <div class="toggle" title="Inventory">
+          <i class="fa-solid fa-box-open"></i>
+        </div>
+        <div class="item-list-wrapper">
+          <div class="item-list">
+
+          </div>
+        </div>
+      </div>
+
+      <div class="tools">
+        <button id="reset-room-btn">Reset room</button>
+      </div>
+    </div>
   </div>
+
 
   <div class="templates">
     <div class="quote">
@@ -31,9 +52,16 @@
     <div class="input">
       <div class="quote">
         <div class="text"></div>
-        <input value="Fon" />
-        <button>Go</button>
+        <input />
+        <button><i class="fa-solid fa-wand-sparkles"></i></button>
       </div>
+    </div>
+
+    <div class="popup-wrapper">
+      <div class="popup">
+
+      </div>
+      <span class="click-message">(click to continue)</span>
     </div>
   </div>
 
@@ -41,9 +69,9 @@
     <button class="button-look"
             title="Look"><i class="fa-solid fa-eye"></i></button>
     <button class="button-use"
-            title="Use"><i class="fa-solid fa-wand-sparkles"></i></button>
+            title="Interact"><i class="fa-solid fa-hand"></i></button>
     <button class="button-pickup"
-            title="Pick Up"><i class="fa-solid fa-hand"></i></button>
+            title="Pick Up"><i class="fa-solid fa-hand-holding"></i></button>
     <button class="button-talk"
             title="Talk"><i class="fa-solid fa-comment"></i></button>
   </div>

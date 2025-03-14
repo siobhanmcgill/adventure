@@ -1,8 +1,16 @@
-import {Room, RoomList} from '../../types';
+import {PopupList, Room, RoomList} from '../../types';
 
 export const bedroom_1: Room = {
   roomId: 'bedroom_1',
-  init: {'states': ['alarm_on', 'computer_has_messages', 'no_pants']},
+  init: {
+    'states': ['alarm_on', 'computer_has_messages', 'no_pants'],
+    artwork: {
+      url: new URL(`../../../../artwork/bedroom_1.svg`, import.meta.url),
+      viewBox: '0 0 1024 768',
+    },
+    protagonistScale: 0.95,
+    styles: [new URL('./bedroom_1.scss', import.meta.url)]
+  },
   states: {
     'alarm_on': {
       'idle': ['I should turn my alarm off.', 'I better click on that alarm.']
@@ -12,17 +20,20 @@ export const bedroom_1: Room = {
     'no_pants': {}
   },
   enter: {
-    'default': 'Home, sweet temporary home.',
-    'alarm_on': 'Ugh, my throat hurts. It\'s another day, I guess.',
+    'hallway_1': {quote: 'Home, sweet temporary home.', coords: {x: 0, y: 0}},
+    'default': {
+      quote: 'Okay, first day in the rest of my life. Here we go.',
+      coords: {x: 650, y: 670},
+    },
   },
   objects: {
     'clock': {
-      'name{alarm_on}': 'Clock (beeping)',
-      'look{alarm_on}': 'Yep, it sure is beeping.',
-      'talk{alarm_on}': 'Shut up.',
+      'name.alarm_on': 'Clock (beeping)',
+      'look.alarm_on': 'Yep, it sure is beeping.',
+      'talk.alarm_on': 'Shut up.',
       'name': 'Clock (not beeping)',
       'look': 'It\'s a clock. It woke me up. I hate it.',
-      'use{alarm_on}':
+      'use.alarm_on':
           {'quote': 'Okay, okay, I\'m up.', 'removeState': 'alarm_on'},
       'use': 'It\'s ready to go off again tomorrow. I can\'t wait.',
       'talk': 'Hey clock, I hate you.',
@@ -31,7 +42,7 @@ export const bedroom_1: Room = {
     },
     'bed': {
       'look': 'It\'s a bed. It\'s as uncomfortable as it is empty.',
-      'use{alarm_on}': 'Not with the alarm blaring like that.',
+      'use.alarm_on': 'Not with the alarm blaring like that.',
       'use': 'I wish I could, but I really need to find some work.',
       'talk': [
         'Yep, just me standing here alone talking to an empty bed.',
@@ -42,12 +53,14 @@ export const bedroom_1: Room = {
       'look': 'It\'s a picture of my ex-wife. She looks happy.',
       'pickup':
           'I prefer to leave the past in the past. which is why I keep that next to my bed.',
-      'use': {'addState': 'picture_turned_down'}
+      'use': {'addState': 'picture_turned_down'},
+      'talk': 'She doesn\'t want to hear from me.'
     },
     'picture_down': {
       'name': 'Picture (still there)',
       'look': '*sigh*',
-      'use': {'removeState': 'picture_turned_down'}
+      'use': {'removeState': 'picture_turned_down'},
+      'talk': ['I\'m over it.', '', '{slow}Clearly.'],
     },
     'computer': {
       'look': 'It\'s a computer, for when I need to compute.',
@@ -56,16 +69,22 @@ export const bedroom_1: Room = {
         'What a concept.'
       ],
       'use': {
-        'queue': [{'popup': 'intro_computer_1'}, {'popup': 'intro_computer_2'}],
+        'queue': [
+          {'popup': 'intro_computer_1'}, {'popup': 'intro_computer_2'},
+          {'popup': 'intro_computer_3'}
+        ],
         'onQueueFinish': {
           'quote': 'I really gotta find more work.',
           'removeState': 'computer_has_messages'
         }
-      }
+      },
+      'talk': 'Hello, computer.'
     },
     'pills': {
       'look': 'My favorite little blue pills.',
-      'use': 'I can\'t really take them without water.',
+      'use{pill-picked-up}': 'I already have one.',
+      'use': 'I should try the "Pick up" action on them.',
+      'pickup{pill-picked-up}': 'I already have one.',
       'pickup': {
         'quote': 'Come here, darling.',
         'addItem': 'pill',
@@ -154,4 +173,53 @@ export const bedroom_1: Room = {
       'use': 'Nobody animated me sitting down yet.'
     }
   },
+  popups: {
+    'intro_computer_1': {
+      'quote': 'There\'s a message from my last client.',
+      'popupStyle': 'computer',
+      'text': `
+{{p}}: 
+tahnks again! Bitsy is happy and so snuggly.
+
+She missed me. 
+-Sam
+`,
+      'quoteAfter': [
+        'I watched her cat for a week.', 'Hey, work is work.',
+        'I think I have more messages.'
+      ]
+    },
+    'intro_computer_2': {
+      'quote': 'There\'s a message from my comlink provider.',
+      'popupStyle': 'computer',
+      'text': `
+Dear Eric Jenkuns,
+
+Your request to update the primary billing owner on your account has been processed. 
+
+If you requested this change, no further action is required. However, if this wasn't you, you should probably call us to get it sorted out, unless someone has stolen your comlink account in which case you probably cannot call us. In that event, please respond to this message with the name and address of your identity thief, and we will update our records for the new owner of your identity. 
+
+Have a nice day, and thank you for trusting CyberCom for your comlink needs. 
+
+Sincerely, 
+Deedo Quandary
+Sales Associate, CyberCom. 
+
+_P.S. have you tried our new Max Plus Deluxe and Max Plus Deluxe Mini comlinks? The digital clarity will blow you away!_
+`,
+      'quoteAfter': [
+        'I guess I\'ll need to get a new burner comlink.',
+        'Not that anybody\'s gonna call me.'
+      ]
+    },
+    'intro_computer_3': {
+      'quote': 'There\'s a message from my ex.',
+      'popupStyle': 'computer',
+      'text': `
+{{p}}: 
+Hey, just checking in to see if you sent in that form to update the comlink yet? It's been a few days. I hope you're doing okay.
+-Jace
+`
+    }
+  }
 };

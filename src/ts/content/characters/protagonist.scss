@@ -1,0 +1,11 @@
+@use "../../../styles/mixins" as m;
+
+
+.protagonist {
+  #{m.svgLabel("pants")} {
+    opacity: 1;
+  }
+  #{m.svgLabel("no-pants")} {
+    opacity: 0;
+  }
+}

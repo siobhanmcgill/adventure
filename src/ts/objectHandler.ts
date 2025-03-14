@@ -1,11 +1,11 @@
 import {firstValueFrom, take} from 'rxjs';
 
-import {FALLBACTIONS, LOOK_FALLBACK} from './constants';
+import {FALLBACTIONS} from './constants';
 import {RoomHandler} from './roomHandler';
 import {GameState} from './state';
-import {createSvgElement, getSvg, printDialog} from './svg_utils';
+import {createSvgElement, getSvg, printDialog, tooltip} from './svg_utils';
 import {Action, RoomObject} from './types';
-import {onBodyClick} from './utils';
+import {findMatchingKey, onBodyClick} from './utils';
 
 export class ObjectHandler {
   constructor(
@@ -18,6 +18,13 @@ export class ObjectHandler {
     const actions: Array<'look'|'use'|'pickup'|'talk'> =
         ['look', 'use', 'pickup', 'talk'];
 
+    const tooltipActor = tooltip(this.svgElement);
+    this.state.roomStates$.subscribe(states => {
+      const nameKey = findMatchingKey(this.data, 'name', states);
+      tooltipActor.setText(this.data[nameKey] as string ?? this.id);
+    });
+
+    // Show the action menu when you click on a thing.
     this.svgElement.addEventListener('click', (event: MouseEvent) => {
       const actionMenuTemplate: HTMLDivElement =
           document.querySelector('body > .actions')!;
@@ -41,54 +48,52 @@ export class ObjectHandler {
         menu.querySelector(`.button-${actionBase}`)
             ?.addEventListener('click', async () => {
               const states =
-                  (await firstValueFrom(this.roomHandler.activeStates$))
+                  (await firstValueFrom(this.state.roomStates$))
                       .reverse();
-              const keys = Object.keys(this.data);
-              let action: string = actionBase;
-              const actionKey = states.some(s => {
-                const thisAction = `${actionBase}{${s}}`;
-                const pass = keys.includes(thisAction);
-                if (pass) {
-                  action = thisAction;
-                }
-                return pass;
-              });
+              const action = findMatchingKey(this.data, actionBase, states);
 
               this.doAction(this.data[action] ?? FALLBACTIONS[actionBase]);
             });
       }
 
-      setTimeout(() => {
-        onBodyClick(() => {
-          container.remove();
-          return false;
-        });
-      });
+      onBodyClick().then(() => container.remove());
     });
   }
 
-  private doAction(action: string|string[]|Action) {
+  private async doAction(action: string|string[]|Action): Promise<void> {
     if (typeof action === 'string') {
-      printDialog([action]);
+      return printDialog([action], this.state);
     } else if (
         (action as string[]).length &&
         typeof (action as string[])[0] === 'string') {
-      printDialog(action as string[]);
+      return printDialog(action as string[], this.state);
     } else {
-      // TODO: Handle an action queue.
+      let commitAction = action as Action;
+      const queue = commitAction.queue ?? [];
+      const onQueueFinish = commitAction.onQueueFinish;
+      if (queue?.length) {
+        commitAction = queue.shift()!;
+      }
 
-      console.log({action});
-      action = action as Action;
-      if (action.quote) {
-        printDialog(([] as string[]).concat(action.quote));
+      await (
+          commitAction.quote ?
+              printDialog(([] as string[]).concat(commitAction.quote), this.state) :
+              Promise.resolve());
+      await (
+          commitAction.popup ? this.roomHandler.showPopup(commitAction.popup) :
+                               Promise.resolve());
+      this.state.addRoomState(commitAction.addState);
+      this.state.removeRoomState(commitAction.removeState);
+      this.state.addToInventory(commitAction.addItem);
+      if (commitAction.addItem) {
+        this.state.addRoomState(`${commitAction.addItem}-picked-up`);
       }
-      this.roomHandler.addState(action.addState);
-      this.roomHandler.removeState(action.removeState);
-      this.state.addToInventory(action.addItem);
-      if (action.addItem) {
-        this.roomHandler.addState(`${action.addItem}-picked-up`)
+      this.state.removeFromInventory(commitAction.removeItem);
+
+      if (!queue.length && onQueueFinish) {
+        return this.doAction(onQueueFinish);
       }
-      this.state.removeFromInventory(action.removeItem);
     }
+    return Promise.resolve();
   }
 }

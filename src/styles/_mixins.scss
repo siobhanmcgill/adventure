@@ -1,0 +1,3 @@
+@function svgLabel($lab) {
+  @return "[inkscape\\:label\=\"#{$lab}\"]";
+}

@@ -1,7 +1,10 @@
-import {BehaviorSubject, combineLatest, Subject} from 'rxjs';
-import {filter} from 'rxjs/operators';
+import {BehaviorSubject, combineLatest, firstValueFrom, Subject} from 'rxjs';
+import {debounceTime, filter} from 'rxjs/operators';
 
-import {ROOMS} from './artworkMap';
+import {getRoom} from './lazyLoaders';
+import {newGame} from './newGame';
+import {RecurringPromiseSource} from './recurringPromise';
+// import {ROOMS} from './artworkMap';
 import {getSvg} from './svg_utils';
 import {InventoryItem, Room} from './types';
 
@@ -21,33 +24,60 @@ export class GameState {
   private readonly roomSource = new BehaviorSubject<Room|undefined>(undefined);
   readonly room$ = this.roomSource.asObservable().pipe(filter(Boolean));
 
-  private readonly inventorySource = new BehaviorSubject<string[]>([]);
-  private readonly inventory$ = this.inventorySource.asObservable();
+  private readonly inventorySource =
+      new BehaviorSubject<Set<string>>(new Set());
+  readonly inventory$ = this.inventorySource.asObservable();
 
   private readonly roomStatesSource = new BehaviorSubject<string[]>([]);
-  private readonly roomStates$ = this.inventorySource.asObservable();
+  readonly roomStates$ = this.roomStatesSource.asObservable();
 
   private readonly svgElement = getSvg();
 
   constructor() {
-    combineLatest([
-      this.room$, this.inventory$, this.roomStates$
-    ]).subscribe(() => {
-      this.save();
-    });
-
-    const savedState = window.localStorage.getItem(AGENCY_SAVE_STATE);
+    const savedState = this.getSaveState();
+    let wait: Promise<unknown>;
     if (savedState) {
-      const loadedState = JSON.parse(savedState) as SavedState;
       this.setProtagonistName(
-          loadedState.protagonistName.first + ' ' +
-          loadedState.protagonistName.last);
-
-      this.roomSource.next(ROOMS[loadedState.currentRoomId]);
-      this.roomStatesSource.next(
-          loadedState.roomStates[loadedState.currentRoomId]);
-      this.inventorySource.next(loadedState.inventory);
+          savedState.protagonistName.first + ' ' +
+          savedState.protagonistName.last);
+      wait = this.loadSavedRoom(savedState);
+    } else {
+      wait = newGame(this);
     }
+
+    wait.then(() => {
+      setTimeout(() => {
+        combineLatest([this.room$, this.inventory$, this.roomStates$])
+            .pipe(debounceTime(100))
+            .subscribe(() => {
+              this.save();
+              console.log('game state saved');
+            });
+      }, 1000);
+    });
+  }
+
+  async resetRoomState() {
+    const room = await firstValueFrom(this.room$);
+    this.setRoomStates(room.init.states);
+  }
+
+  getSaveState(): SavedState|undefined {
+    const savedState = window.localStorage.getItem(AGENCY_SAVE_STATE);
+    if (!savedState) {
+      return;
+    }
+    return JSON.parse(savedState) as SavedState;
+  }
+
+  private async loadSavedRoom(loadedState: SavedState) {
+    const room = await getRoom(loadedState.currentRoomId);
+    if (!room) {
+      // something has gone horribly wrong
+      return;
+    }
+    this.roomSource.next(room);
+    this.inventorySource.next(new Set(loadedState.inventory));
   }
 
   getSvgElement() {
@@ -66,6 +96,10 @@ export class GameState {
 
   setRoom(room: Room) {
     this.roomSource.next(room);
+  }
+
+  setRoomStates(states: string[]) {
+    this.roomStatesSource.next(states);
   }
 
   addRoomState(state?: string) {
@@ -90,7 +124,7 @@ export class GameState {
     if (!itemId) {
       return;
     }
-    this.inventorySource.next([...this.inventorySource.value, itemId]);
+    this.inventorySource.next(new Set([...this.inventorySource.value, itemId]));
   }
 
   removeFromInventory(itemId?: string) {
@@ -98,9 +132,7 @@ export class GameState {
       return;
     }
     const items = this.inventorySource.value;
-    if (items.includes(itemId)) {
-      items.splice(items.indexOf(itemId), 1);
-    }
+    items.delete(itemId);
     this.inventorySource.next(items);
   }
 
@@ -110,7 +142,7 @@ export class GameState {
       protagonistName: this.protagonistName,
       currentRoomId,
       roomStates: {[currentRoomId]: this.roomStatesSource.value},
-      inventory: this.inventorySource.value,
+      inventory: [...this.inventorySource.value.values()],
     };
 
     window.localStorage.setItem(AGENCY_SAVE_STATE, JSON.stringify(bundle));

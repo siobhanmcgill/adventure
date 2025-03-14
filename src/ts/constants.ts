@@ -4,3 +4,5 @@ export const FALLBACTIONS = {
   pickup: 'I don\'t think I can.',
   talk: 'I don\'t want to talk to that.'
 };
+
+export const FIRST_ROOM = 'bedroom_1';

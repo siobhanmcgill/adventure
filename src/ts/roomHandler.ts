@@ -1,22 +1,22 @@
-import {BehaviorSubject} from 'rxjs';
-import {filter, map, take} from 'rxjs/operators';
 
-import {ARTWORK} from './artworkMap';
+import {getCharacter} from './lazyLoaders';
 import {ObjectHandler} from './objectHandler';
 import {GameState} from './state';
-import {createSvgElement} from './svg_utils';
-import {Room} from './types';
+import {createSvgElement, getSvg, injectHtmlFromTemplate, loadSvgString, printDialog} from './svg_utils';
+import {Popup, Room} from './types';
+import {formatString, loadStyles, onBodyClick, typeEffect} from './utils';
 
 export class RoomHandler {
   private currentRoomId?: string;
   private roomContainer?: SVGGElement;
 
   private readonly room$ = this.gameState.room$;
-  private readonly activeStateSource = new BehaviorSubject<string[]>([]);
-
-  readonly activeStates$ = this.activeStateSource.asObservable();
 
   private readonly objects = new Map<string, ObjectHandler>();
+  private readonly popupData = new Map<string, Popup>();
+
+  private accessibleArea?: SVGPathElement;
+  private protagonistContainer?: SVGGElement;
 
   constructor(private readonly gameState: GameState) {
     this.room$.subscribe(room => {
@@ -25,7 +25,7 @@ export class RoomHandler {
       }
     });
 
-    this.activeStates$.subscribe(states => {
+    this.gameState.roomStates$.subscribe(states => {
       if (this.roomContainer) {
         this.roomContainer.classList.remove(...this.roomContainer.classList);
         this.roomContainer.classList.add(
@@ -38,75 +38,52 @@ export class RoomHandler {
     return this.roomContainer;
   }
 
-  hasState(state: string) {
-    return this.activeStates$.pipe(
-        take(1), filter(s => s.includes(state)), map(Boolean));
-  }
-
-  addState(state?: string) {
-    if (!state) {
+  async showPopup(popupId: string): Promise<void> {
+    if (!this.popupData.has(popupId)) {
       return;
     }
-    this.activeStateSource.next([...this.activeStateSource.value, state]);
-  }
 
-  removeState(state?: string) {
-    if (!state) {
-      return;
-    }
-    const states = this.activeStateSource.value;
-    if (states.includes(state)) {
-      states.splice(states.indexOf(state), 1);
-    }
-    this.activeStateSource.next(states);
+    const {quote, text, popupStyle, quoteAfter} = this.popupData.get(popupId)!;
+
+    return (quote ? printDialog(quote, this.gameState) : Promise.resolve())
+        .then(() => {
+          const {container, htmlObject} = injectHtmlFromTemplate(
+              '.popup-wrapper', {width: '100%', height: '100%'});
+          htmlObject.classList.add(popupStyle);
+          const popupObj =
+              htmlObject.querySelector('.popup')! as HTMLDivElement;
+          popupObj.innerHTML = formatString(text, this.gameState);
+          typeEffect(popupObj);
+
+          return onBodyClick(true)
+              .then(() => {
+                container.remove();
+              })
+              .then(
+                  () => quoteAfter ? printDialog(quoteAfter, this.gameState) :
+                                     Promise.resolve());
+        });
   }
 
   private async initializeRoom(room: Room) {
+    const root = getSvg();
+    root.innerHTML = '';
+
     this.currentRoomId = room.roomId;
     this.objects.clear();
+
+    const styles = room.init.styles;
+    for (const style of styles) {
+      loadStyles(room.roomId, style);
+    }
 
     this.roomContainer = createSvgElement('g') as SVGGElement;
     this.gameState.getSvgElement().appendChild(this.roomContainer);
 
-    const artworkUrl = ARTWORK.rooms[room.roomId] ?? '';
-    const artwork = await (await fetch(artworkUrl)).text();
-
-    console.log({artworkUrl, artwork});
-
-    const placeholder = document.createElement('div');
-    placeholder.classList.add('placeholder');
-    placeholder.innerHTML = artwork;
-    document.body.appendChild(placeholder);
-    const sodipodi =
-        placeholder.querySelector(CSS.escape('sodipodi:namedview'));
-    if (sodipodi) {
-      sodipodi.remove();
-    }
-    const clipPaths = placeholder.querySelectorAll('clipPath use');
-    for (const clipPath of clipPaths) {
-      const useId = clipPath.getAttribute('xlink:href')?.replace('#', '');
-      if (useId) {
-        const wrong = document.getElementById(useId);
-        if (wrong?.tagName === 'g') {
-          const right = wrong.childNodes[1] as SVGElement;
-          if (right) {
-            const rightId = right.getAttribute('id');
-            if (rightId) {
-              clipPath.setAttribute('xlink:href', `#${rightId}`);
-            }
-          }
-        }
-      }
-    }
-    const placeholderSvg = placeholder.querySelector('svg');
-    if (!placeholderSvg) {
-      // Something went horribly wrong.
-      return;
-    }
-
-    this.roomContainer.innerHTML = placeholderSvg.innerHTML;
-
-    placeholder.remove();
+    const artworkData = room.init.artwork ?? '';
+    this.roomContainer.innerHTML =
+        await loadSvgString(artworkData.url, artworkData.layerId);
+    root.setAttribute('viewBox', artworkData.viewBox);
 
     const groups = this.roomContainer.querySelectorAll('g');
     for (const group of groups) {
@@ -119,6 +96,43 @@ export class RoomHandler {
       }
     }
 
-    this.activeStateSource.next(room.init.states.slice());
+    const saveState = this.gameState.getSaveState();
+    if (saveState && saveState.roomStates[room.roomId]) {
+      this.gameState.setRoomStates(saveState.roomStates[room.roomId]);
+    } else {
+      this.gameState.setRoomStates(room.init.states.slice());
+    }
+
+    this.accessibleArea =
+        this.roomContainer.querySelector(
+            '[inkscape\\:label=\'accessible-area\']') as SVGPathElement;
+
+    // Insert the protagonist.
+    const protagonistData = (await getCharacter('protagonist'))!;
+    const protagonistStyleData =
+        protagonistData[room.roomId] ?? protagonistData.main;
+    const protagonistArt =
+        await loadSvgString(protagonistStyleData.artwork.url);
+
+    const entry = room.enter.default;
+    const scale = room.init.protagonistScale;
+    this.protagonistContainer =
+        createSvgElement('g', 'protagonist character', {
+          transform: `translate(${
+              entry.coords.x -
+              ((protagonistStyleData.artwork.coords?.x ?? 0) * scale)}, ${
+              entry.coords.y -
+              ((protagonistStyleData.artwork.coords?.y ?? 0) *
+               scale)}) scale(${room.init.protagonistScale})`
+        }) as SVGGElement;
+
+    this.protagonistContainer.innerHTML = protagonistArt;
+    this.accessibleArea.after(this.protagonistContainer);
+
+    if (room.popups) {
+      for (const key of Object.keys(room.popups)) {
+        this.popupData.set(key, room.popups[key]);
+      }
+    }
   }
 }
