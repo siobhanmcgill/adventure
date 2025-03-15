@@ -1,3 +1,23 @@
+@use 'sass:list';
+
 @function svgLabel($lab) {
   @return "[inkscape\\:label\=\"#{$lab}\"]";
+}
+
+@mixin hideItems($itemList) {
+  @each $item in $itemList {
+    $itemClass: $item;
+    $itemLabel: $item;
+
+    @if list.length($item) == 2 {
+      $itemClass: list.nth($item, 1);
+      $itemLabel: list.nth($item, 2);
+    }
+
+    &.#{$itemClass}-picked-up {
+      #{svgLabel($itemLabel)} {
+        display: none;
+      }
+    }
+  }
 }

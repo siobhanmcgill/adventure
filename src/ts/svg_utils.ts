@@ -13,13 +13,15 @@ export function emptySvgElement(element: SVGElement) {
 const UNSAFE_SVG_ATTRIBUTES = ['href', 'xlink:href'];
 
 export function setSvgAttribute(
-    svg: SVGElement,
-    attr: string,
-    value: string,
-    ): void {
+  svg: SVGElement,
+  attr: string,
+  value: string
+): void {
   const attrLower = attr.toLowerCase();
-  if (UNSAFE_SVG_ATTRIBUTES.indexOf(attrLower) !== -1 ||
-      attrLower.indexOf('on') === 0) {
+  if (
+    UNSAFE_SVG_ATTRIBUTES.indexOf(attrLower) !== -1 ||
+    attrLower.indexOf('on') === 0
+  ) {
     let msg = '';
     throw new Error(msg);
   }
@@ -33,17 +35,17 @@ interface SvgAttributes {
   [index: string]: unknown;
   x?: number;
   y?: number;
-  width?: number|'100%';
-  height?: number|'100%';
+  width?: number | '100%';
+  height?: number | '100%';
   transform?: string;
 }
 
 /** Generate an SVG Element. */
 export function createSvgElement(
-    name: string,
-    className?: string,
-    attributes?: SvgAttributes,
-    ): SVGElement {
+  name: string,
+  className?: string,
+  attributes?: SvgAttributes
+): SVGElement {
   const el = document.createElementNS('http://www.w3.org/2000/svg', name);
   if (className) {
     el.classList.add(...className.split(' '));
@@ -61,38 +63,104 @@ export function createSvgElement(
 }
 
 export function injectHtmlFromTemplate(
-    templateSelector: string, attributes?: SvgAttributes) {
-  const htmlObject =
-      document.querySelector(`.templates > ${templateSelector}`)!.cloneNode(
-          true) as HTMLDivElement;
+  templateSelector: string,
+  attributes?: SvgAttributes
+) {
+  const htmlObject = document
+    .querySelector(`.templates > ${templateSelector}`)!
+    .cloneNode(true) as HTMLDivElement;
 
   return injectHtml(htmlObject, templateSelector.replace('.', ''), attributes);
 }
 
 export function injectHtml(
-    htmlObject: HTMLElement, className: string, attributes?: SvgAttributes) {
-  const container =
-      createSvgElement('foreignObject', `${className}-container`, attributes) as
-      SVGForeignObjectElement;
+  htmlObject: HTMLElement,
+  className: string,
+  attributes?: SvgAttributes
+) {
+  const container = createSvgElement(
+    'foreignObject',
+    `${className}-container`,
+    attributes
+  ) as SVGForeignObjectElement;
   container.appendChild(htmlObject);
   getSvg().appendChild(container);
   return {container, htmlObject};
 }
 
+export function getPosition(element: SVGElement) {
+  let {left, top, width, height} = element.getBoundingClientRect();
+  const {left: svgX, top: svgY} = getSvg()
+    .querySelector('.room')!
+    .getBoundingClientRect();
+  return {left: left - svgX, top: top - svgY, width, height};
+}
+
 export async function printDialog(
-    quote: Quote, state: GameState): Promise<void> {
+  quote: Quote,
+  state: GameState
+): Promise<void> {
   const text = ([] as string[]).concat(quote);
-  const {container, htmlObject} =
-      injectHtmlFromTemplate('.quote', {x: 50, y: 20, width: 500, height: 500});
   const thisText = text.shift() ?? '';
 
   const matcher = /^(([a-z-_]+):)?({([a-z-_, ]+)})?(.*)/i;
   const [, , characterId, , effects, dialogText] =
-      thisText.match(matcher) ?? [];
+    thisText.match(matcher) ?? [];
 
-  htmlObject.innerHTML = formatString(dialogText ?? thisText, state);
-  await typeEffect(htmlObject, effects?.includes('slow'));
+  // TODO: Get the speaker name from character data.
+  const speakerName = state.getProtagonistName();
+
+  const placeholder = document
+    .querySelector('.templates > .quote')!
+    .cloneNode(true) as HTMLDivElement;
+  placeholder.classList.add('placeholder');
+  document.body.appendChild(placeholder);
+  placeholder.querySelector('.character')!.textContent = speakerName;
+  placeholder.querySelector('.quote-contents')!.innerHTML = formatString(
+    dialogText ?? thisText,
+    state
+  );
+  const {width: quoteWidth, height: quoteHeight} =
+    placeholder.getBoundingClientRect();
+
+  const speakerElement = getSvg().querySelector(
+    `.character.${characterId ?? 'protagonist'}`
+  ) as SVGElement;
+  let x = 50;
+  let y = 20;
+  if (speakerElement) {
+    let {left, top, width} = getPosition(speakerElement);
+    x = left > quoteWidth ? left - (quoteWidth - width / 2) : left + width / 2;
+    y = top - (quoteHeight + 30);
+
+    speakerElement.classList.add('talking');
+  }
+
+  const {container, htmlObject} = injectHtmlFromTemplate('.quote', {
+    x,
+    y,
+    width: quoteWidth + 30,
+    height: quoteHeight + 30,
+  });
+
+  const quoteContents = htmlObject.querySelector(
+    '.quote-contents'
+  )! as HTMLDivElement;
+  quoteContents.innerHTML =
+    placeholder.querySelector('.quote-contents')!.innerHTML;
+  // placeholder.remove();
+  htmlObject.querySelector('.character')!.textContent = speakerName;
+
+  await typeEffect(quoteContents, effects?.includes('slow'));
+
+  if (speakerElement) {
+    setTimeout(() => {
+      speakerElement.classList.remove('talking');
+    }, 700);
+  }
+
   await onBodyClick(true);
+
   container.remove();
   if (text.length) {
     return printDialog(text, state);
@@ -100,9 +168,13 @@ export async function printDialog(
 }
 
 export async function loadSvgString(
-    fromUrl: URL, useId?: string): Promise<string> {
-  const artwork =
-      (await (await fetch(fromUrl)).text()).replace(/display: inline;?/gi, '');
+  fromUrl: URL,
+  useId?: string
+): Promise<string> {
+  const artwork = (await (await fetch(fromUrl)).text()).replace(
+    /display: inline;?/gi,
+    ''
+  );
   return extractIdFromSvg(artwork, useId);
 }
 
@@ -137,12 +209,19 @@ export function extractIdFromSvg(fullSvg: string, idToGrab?: string): string {
     return '';
   }
 
-  let html: string;
+  let elementToGrab: SVGElement;
   if (idToGrab) {
-    html = placeholderSvg.getElementById(idToGrab).outerHTML;
+    elementToGrab = placeholderSvg.getElementById(idToGrab) as SVGElement;
   } else {
-    html = placeholderSvg.innerHTML;
+    elementToGrab = placeholderSvg;
   }
+  // If the layer was hidden in an image editor, make sure it's showing here.
+  const style = elementToGrab.getAttribute('style');
+  elementToGrab.setAttribute(
+    'style',
+    (style ?? '').replace('display: none', '')
+  );
+  const html = idToGrab ? elementToGrab.outerHTML : elementToGrab.innerHTML;
 
   placeholder.remove();
 
@@ -154,15 +233,16 @@ const TOOLTIP_HEIGHT = 40;
 
 // TODO: Positions are wrong when the SVG is smaller than 1024x768
 function setPosition(container: SVGElement, x: number, y: number) {
-  const {left: svgX, top: svgY} =
-      getSvg().querySelector('.room')!.getBoundingClientRect();
-  setSvgAttribute(container, 'x', String(x - (svgX + (TOOLTIP_WIDTH / 2))));
+  const {left: svgX, top: svgY} = getSvg()
+    .querySelector('.room')!
+    .getBoundingClientRect();
+  setSvgAttribute(container, 'x', String(x - (svgX + TOOLTIP_WIDTH / 2)));
   setSvgAttribute(container, 'y', String(y - (svgY + (TOOLTIP_HEIGHT + 10))));
 }
 
 export function tooltip(target: SVGElement) {
-  let container: SVGForeignObjectElement|undefined;
-  let timer: number|undefined;
+  let container: SVGForeignObjectElement | undefined;
+  let timer: number | undefined;
   let text = '';
   target.addEventListener('mousemove', (e: MouseEvent) => {
     if (timer) {
@@ -184,9 +264,9 @@ export function tooltip(target: SVGElement) {
       const tooltip = document.createElement('div');
       tooltip.classList.add('tooltip');
       container = injectHtml(tooltip, 'tooltip', {
-                    width: TOOLTIP_WIDTH,
-                    height: TOOLTIP_HEIGHT
-                  }).container;
+        width: TOOLTIP_WIDTH,
+        height: TOOLTIP_HEIGHT,
+      }).container;
     }
     container.querySelector('.tooltip')!.textContent = text;
     container.classList.add('show');
@@ -205,6 +285,6 @@ export function tooltip(target: SVGElement) {
   return {
     setText: (newText: string) => {
       text = newText;
-    }
-  }
+    },
+  };
 }

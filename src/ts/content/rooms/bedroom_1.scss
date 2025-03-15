@@ -1,4 +1,5 @@
 @use "../../../styles/mixins" as m;
+@use 'sass:math';
 
 // BEDROOM
 @keyframes air-car {
@@ -16,8 +17,8 @@
   $percent: 0;
 
   @for $i from 1 through 11 {
-    $step: $i * (100 / 11.11111);
-    $scale: $step / 100;
+    $step: $i * math.div(100, 11.11111);
+    $scale: math.div($step, 100);
 
     $percent: $percent + 3;
 
@@ -40,17 +41,8 @@
     }
   }
 
-  &.pants-picked-up {
-    #pants {
-      opacity: 0;
-    }
-  }
-
-  &.pill-picked-up {
-    #pill-to-pick-up {
-      opacity: 0;
-    }
-  }
+  @include m.hideItems(("pants", "cup", "sweater", 
+    ("pill" "pill-to-pick-up"), ("empty_thc_capsule", "capsules")));
 
   [inkscape\:label="window"] {
     [inkscape\:label="car"] {
@@ -94,6 +86,7 @@
       #{m.svgLabel("pants")} {
         opacity: 0;
       }
+
       #{m.svgLabel("no-pants")} {
         opacity: 1;
       }
