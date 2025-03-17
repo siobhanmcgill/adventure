@@ -1,5 +1,7 @@
 export type Quote = string|string[];
 
+export type ActionOptions = 'look'|'interact'|'pickup'|'talk';
+
 export interface SvgSource {
   url: URL;
   layerId?: string;

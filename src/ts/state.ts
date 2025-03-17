@@ -7,7 +7,8 @@ import {newGame} from './newGame';
 import {RecurringPromiseSource} from './recurringPromise';
 // import {ROOMS} from './artworkMap';
 import {getSvg} from './svg_utils';
-import {InventoryItem, Room} from './types';
+import {ActionOptions, InventoryItem, Room} from './types';
+import { Action } from 'rxjs/internal/scheduler/Action';
 
 export const AGENCY_SAVE_STATE = 'agency_save_state';
 
@@ -41,6 +42,8 @@ export class GameState {
 
   private grabbedItem?: InventoryWithId;
 
+  private activeAction: ActionOptions = 'look';
+
   constructor() {
     const savedState = this.getSaveState();
     let wait: Promise<unknown>;
@@ -54,6 +57,8 @@ export class GameState {
     }
 
     wait.then(() => {
+      this.setupActions();
+
       setTimeout(() => {
         combineLatest([this.room$, this.inventory$, this.roomStates$])
             .pipe(debounceTime(100))
@@ -174,5 +179,34 @@ export class GameState {
     };
 
     window.localStorage.setItem(AGENCY_SAVE_STATE, JSON.stringify(bundle));
+  }
+
+  getActiveAction() {
+    return this.activeAction;
+  }
+
+  private setupActions(initial: ActionOptions = 'look') {
+    for (const action of ['look','interact','pickup','talk'] as ActionOptions[]) {
+      const button = document.querySelector(`.action-buttons .button-${action}`)!;
+      button.addEventListener('click', (event) => {
+        document.querySelectorAll('.action-buttons button').forEach(otherButton => {
+          otherButton.classList.remove('active');
+        });
+        button.classList.add('active');
+        this.activeAction = action;
+
+        document.body.classList.remove('active-action-look');
+        document.body.classList.remove('active-action-interact');
+        document.body.classList.remove('active-action-pickup');
+        document.body.classList.remove('active-action-talk');
+
+        document.body.classList.add(`active-action-${action}`);
+
+        event.stopImmediatePropagation();
+        event.stopPropagation();
+      });
+    }
+
+    (document.querySelector(`.action-buttons .button-${initial}`) as HTMLButtonElement).click();
   }
 }

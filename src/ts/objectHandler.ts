@@ -10,74 +10,58 @@ import {findMatchingKey, onBodyClick} from './utils';
 
 export class ObjectHandler {
   constructor(
-      readonly id: string, private readonly state: GameState,
-      private readonly roomHandler: RoomHandler,
-      private readonly svgElement: SVGGElement,
-      private readonly data: RoomObject) {
+    readonly id: string,
+    private readonly state: GameState,
+    private readonly roomHandler: RoomHandler,
+    private readonly svgElement: SVGGElement,
+    private readonly data: RoomObject
+  ) {
     this.svgElement.classList.add('room-object');
 
-    const actions: Array<'look'|'use'|'pickup'|'talk'> =
-        ['look', 'use', 'pickup', 'talk'];
+    const actions: Array<'look' | 'use' | 'pickup' | 'talk'> = [
+      'look',
+      'use',
+      'pickup',
+      'talk',
+    ];
 
     const tooltipActor = tooltip(this.svgElement);
-    this.state.roomStates$.subscribe(states => {
+    this.state.roomStates$.subscribe((states) => {
       const nameKey = findMatchingKey(this.data, 'name', states);
-      tooltipActor.setText(this.data[nameKey] as string ?? this.id);
+      tooltipActor.setText((this.data[nameKey] as string) ?? this.id);
     });
 
     // Show the action menu when you click on a thing.
-    this.svgElement.addEventListener('click', (event: MouseEvent) => {
+    this.svgElement.addEventListener('click', async (event: MouseEvent) => {
       const grabbedItem = this.state.getGrabbedItem();
       if (grabbedItem) {
         // Try to use the grabbed item on this.
         useItemsTogether(grabbedItem, id, data, this.state, this.roomHandler);
       } else {
-        const actionMenuTemplate: HTMLDivElement =
-            document.querySelector('body > .actions')!;
-        const actionMenuWidth = actionMenuTemplate.clientWidth + 1;
-        const actionMenuHeight = actionMenuTemplate.clientHeight + 1;
+        const states = (await firstValueFrom(this.state.roomStates$)).reverse();
+        const action = findMatchingKey(this.data, this.state.getActiveAction(), states);
 
-        const menu = actionMenuTemplate.cloneNode(true) as HTMLDivElement;
-
-        const {offsetX, offsetY} = event;
-
-        const container =
-            createSvgElement('foreignObject', 'action-container', {
-              x: offsetX - (actionMenuWidth / 2),
-              y: offsetY - (actionMenuHeight + 10),
-              width: actionMenuWidth,
-              height: actionMenuHeight
-            });
-        container.appendChild(menu);
-        getSvg().appendChild(container);
-
-        for (const actionBase of actions) {
-          menu.querySelector(`.button-${actionBase}`)
-              ?.addEventListener('click', async () => {
-                const states =
-                    (await firstValueFrom(this.state.roomStates$)).reverse();
-                const action = findMatchingKey(this.data, actionBase, states);
-
-                doAction(
-                    this.data[action] ?? FALLBACTIONS[actionBase], this.state,
-                    this.roomHandler);
-              });
-        }
-
-        onBodyClick().then(() => container.remove());
+        doAction(
+          this.data[action] ?? FALLBACTIONS[this.state.getActiveAction() as string] ?? `I don't know.`,
+          this.state,
+          this.roomHandler
+        );
       }
     });
   }
 }
 
 export async function doAction(
-    action: string|string[]|Action, state: GameState,
-    roomHandler: RoomHandler): Promise<void> {
+  action: string | string[] | Action,
+  state: GameState,
+  roomHandler: RoomHandler
+): Promise<void> {
   if (typeof action === 'string') {
     return printDialog([action], state);
   } else if (
-      (action as string[]).length &&
-      typeof (action as string[])[0] === 'string') {
+    (action as string[]).length &&
+    typeof (action as string[])[0] === 'string'
+  ) {
     return printDialog(action as string[], state);
   } else {
     let commitAction = action as Action;
@@ -87,13 +71,12 @@ export async function doAction(
       commitAction = queue.shift()!;
     }
 
-    await (
-        commitAction.quote ?
-            printDialog(([] as string[]).concat(commitAction.quote), state) :
-            Promise.resolve());
-    await (
-        commitAction.popup ? roomHandler.showPopup(commitAction.popup) :
-                             Promise.resolve());
+    await (commitAction.quote
+      ? printDialog(([] as string[]).concat(commitAction.quote), state)
+      : Promise.resolve());
+    await (commitAction.popup
+      ? roomHandler.showPopup(commitAction.popup)
+      : Promise.resolve());
     state.addRoomState(commitAction.addState);
     state.removeRoomState(commitAction.removeState);
     state.addToInventory(commitAction.addItem);
