@@ -4,8 +4,7 @@ import {getSvg} from './svg_utils';
 export function onBodyClick(capture = false) {
   return new Promise<void>(resolve => {
     setTimeout(() => {
-      getSvg().addEventListener('click', (event: MouseEvent) => {
-        // callback();
+      document.body.addEventListener('click', (event: MouseEvent) => {
         if (capture) {
           event.preventDefault();
           event.stopPropagation();
@@ -16,7 +15,7 @@ export function onBodyClick(capture = false) {
   });
 }
 
-/** 
+/**
  * {{p}} will be replaced with the protagonist name.
  * _word_ will be italicized
  * Newlines will become paragraphs.

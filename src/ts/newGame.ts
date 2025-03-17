@@ -18,7 +18,7 @@ export async function newGame(state: GameState) {
 
   const p = await getCharacter('protagonist');
 
-  const artData = p!.main;
+  const artData = p!.styles.main;
   const svg = htmlObject.querySelector('svg')!;
   svg.setAttribute('viewBox', artData.artwork.viewBox);
   loadSvgString(artData.artwork.url, artData.artwork.layerId).then(

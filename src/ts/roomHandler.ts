@@ -1,16 +1,12 @@
 import {firstValueFrom} from 'rxjs';
+
 import {getCharacter} from './lazyLoaders';
 import {ObjectHandler} from './objectHandler';
 import {GameState} from './state';
-import {
-  createSvgElement,
-  getSvg,
-  injectHtmlFromTemplate,
-  loadSvgString,
-  printDialog,
-} from './svg_utils';
+import {createSvgElement, getSvg, injectHtmlFromTemplate, loadSvgString, printDialog, tooltip,} from './svg_utils';
 import {Popup, Room} from './types';
 import {formatString, loadStyles, onBodyClick, typeEffect} from './utils';
+import { useItemsTogether } from './inventoryHandler';
 
 export class RoomHandler {
   private currentRoomId?: string;
@@ -35,10 +31,7 @@ export class RoomHandler {
       if (this.roomContainer) {
         this.roomContainer.classList.remove(...this.roomContainer.classList);
         this.roomContainer.classList.add(
-          'room',
-          this.currentRoomId ?? '',
-          ...states
-        );
+            'room', this.currentRoomId ?? '', ...states);
       }
     });
   }
@@ -54,28 +47,27 @@ export class RoomHandler {
 
     const {quote, text, popupStyle, quoteAfter} = this.popupData.get(popupId)!;
 
-    return (
-      quote ? printDialog(quote, this.gameState) : Promise.resolve()
-    ).then(() => {
-      const {container, htmlObject} = injectHtmlFromTemplate('.popup-wrapper', {
-        width: '100%',
-        height: '100%',
-      });
-      htmlObject.classList.add(popupStyle);
-      const popupObj = htmlObject.querySelector('.popup')! as HTMLDivElement;
-      popupObj.innerHTML = formatString(text, this.gameState);
-      typeEffect(popupObj);
-
-      return onBodyClick(true)
+    return (quote ? printDialog(quote, this.gameState) : Promise.resolve())
         .then(() => {
-          container.remove();
-        })
-        .then(() =>
-          quoteAfter
-            ? printDialog(quoteAfter, this.gameState)
-            : Promise.resolve()
-        );
-    });
+          const {container, htmlObject} =
+              injectHtmlFromTemplate('.popup-wrapper', {
+                width: '100%',
+                height: '100%',
+              });
+          htmlObject.classList.add(popupStyle);
+          const popupObj =
+              htmlObject.querySelector('.popup')! as HTMLDivElement;
+          popupObj.innerHTML = formatString(text, this.gameState);
+          typeEffect(popupObj);
+
+          return onBodyClick(true)
+              .then(() => {
+                container.remove();
+              })
+              .then(
+                  () => quoteAfter ? printDialog(quoteAfter, this.gameState) :
+                                     Promise.resolve());
+        });
   }
 
   private async initializeRoom(room: Room) {
@@ -97,10 +89,8 @@ export class RoomHandler {
     this.gameState.getSvgElement().prepend(this.roomContainer);
 
     const artworkData = room.init.artwork ?? '';
-    this.roomContainer.innerHTML = await loadSvgString(
-      artworkData.url,
-      artworkData.layerId
-    );
+    this.roomContainer.innerHTML =
+        await loadSvgString(artworkData.url, artworkData.layerId);
     root.setAttribute('viewBox', artworkData.viewBox);
 
     const groups = this.roomContainer.querySelectorAll('g');
@@ -108,45 +98,60 @@ export class RoomHandler {
       const id = group.id;
       if (room.objects[id]) {
         this.objects.set(
-          id,
-          new ObjectHandler(id, this.gameState, this, group, room.objects[id])
-        );
+            id,
+            new ObjectHandler(
+                id, this.gameState, this, group, room.objects[id]));
       }
     }
 
     const saveState = this.gameState.getSaveState();
+    let isFirstTime = false;
     if (saveState && saveState.roomStates[room.roomId]) {
       this.gameState.setRoomStates(saveState.roomStates[room.roomId]);
     } else {
       this.gameState.setRoomStates(room.init.states.slice());
+      isFirstTime = true;
     }
 
-    this.accessibleArea = this.roomContainer.querySelector(
-      "[inkscape\\:label='accessible-area']"
-    ) as SVGPathElement;
+    this.accessibleArea =
+        this.roomContainer.querySelector(
+            '[inkscape\\:label=\'accessible-area\']') as SVGPathElement;
 
     // Insert the protagonist.
     const protagonistData = (await getCharacter('protagonist'))!;
     const protagonistStyleData =
-      protagonistData[room.roomId] ?? protagonistData.main;
-    const protagonistArt = await loadSvgString(
-      protagonistStyleData.artwork.url
-    );
+        protagonistData.styles[room.roomId] ?? protagonistData.styles.main;
+    const protagonistArt =
+        await loadSvgString(protagonistStyleData.artwork.url);
 
     // TODO: Control where the player entered from.
     const entry = room.enter.default;
 
     const scale = room.init.protagonistScale;
-    this.protagonistContainer = createSvgElement('g', 'protagonist character', {
-      transform: `translate(${
-        entry.coords.x - (protagonistStyleData.artwork.coords?.x ?? 0) * scale
-      }, ${
-        entry.coords.y - (protagonistStyleData.artwork.coords?.y ?? 0) * scale
-      }) scale(${room.init.protagonistScale})`,
-    }) as SVGGElement;
+    this.protagonistContainer =
+        createSvgElement('g', 'protagonist character', {
+          transform: `translate(${
+              entry.coords.x -
+              (protagonistStyleData.artwork.coords?.x ?? 0) * scale}, ${
+              entry.coords.y -
+              (protagonistStyleData.artwork.coords?.y ?? 0) *
+                  scale}) scale(${room.init.protagonistScale})`,
+        }) as SVGGElement;
 
     this.protagonistContainer.innerHTML = protagonistArt;
     this.accessibleArea.after(this.protagonistContainer);
+
+    tooltip(this.protagonistContainer).setText(this.gameState.getProtagonistName());
+
+    this.protagonistContainer.addEventListener('click', (event) => {
+      const grabbedItem = this.gameState.getGrabbedItem();
+      if (grabbedItem) {
+        useItemsTogether(grabbedItem, 'protagonist', 'protagonist', this.gameState, this);
+      }
+
+      event.stopImmediatePropagation();
+      event.stopPropagation();
+    });
 
     if (room.popups) {
       for (const key of Object.keys(room.popups)) {
@@ -155,6 +160,9 @@ export class RoomHandler {
     }
 
     await firstValueFrom(this.gameState.ready$);
-    printDialog(entry.quote, this.gameState);
+
+    if (isFirstTime) {
+      printDialog(entry.quote, this.gameState);
+    }
   }
 }

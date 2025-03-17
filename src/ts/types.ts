@@ -44,7 +44,7 @@ export interface RoomObject {
   // name?: string;
 
   // If string or string[] it will be treated as a quote
-  // Could be action{state} to apply only to a specific state.
+  // Could be action.state to apply only to a specific state.
   // Could also be use#itemId to trigger an action when that item is used on
   // this.
   [action: string]: string|string[]|Action;
@@ -94,9 +94,11 @@ export interface PopupList {
 }
 
 export interface InventoryItem {
+  name?: string;
   description?: string;
   artwork: SvgSource;
 
+  fallbackUse?: Quote;
   use?: {
     // Another Item ID, which if used with this item, triggers this action.
     // This could be dropped on it, or it can be dropped on this.
@@ -117,5 +119,6 @@ export interface CharacterStyle {
 }
 
 export interface Character {
-  [style: string]: CharacterStyle;
+  id: string;
+  styles: {[style: string]: CharacterStyle;}
 }

@@ -1,12 +1,7 @@
-import {
-  BehaviorSubject,
-  combineLatest,
-  firstValueFrom,
-  ReplaySubject,
-  Subject,
-} from 'rxjs';
+import {BehaviorSubject, combineLatest, firstValueFrom, ReplaySubject, Subject,} from 'rxjs';
 import {debounceTime, filter} from 'rxjs/operators';
 
+import {InventoryWithId} from './inventoryHandler';
 import {getRoom} from './lazyLoaders';
 import {newGame} from './newGame';
 import {RecurringPromiseSource} from './recurringPromise';
@@ -29,14 +24,11 @@ export class GameState {
     last: '',
   };
 
-  private readonly roomSource = new BehaviorSubject<Room | undefined>(
-    undefined
-  );
+  private readonly roomSource = new BehaviorSubject<Room|undefined>(undefined);
   readonly room$ = this.roomSource.asObservable().pipe(filter(Boolean));
 
-  private readonly inventorySource = new BehaviorSubject<Set<string>>(
-    new Set()
-  );
+  private readonly inventorySource =
+      new BehaviorSubject<Set<string>>(new Set());
   readonly inventory$ = this.inventorySource.asObservable();
 
   private readonly roomStatesSource = new BehaviorSubject<string[]>([]);
@@ -47,13 +39,15 @@ export class GameState {
 
   private readonly svgElement = getSvg();
 
+  private grabbedItem?: InventoryWithId;
+
   constructor() {
     const savedState = this.getSaveState();
     let wait: Promise<unknown>;
     if (savedState) {
       this.setProtagonistName(
-        savedState.protagonistName.first + ' ' + savedState.protagonistName.last
-      );
+          savedState.protagonistName.first + ' ' +
+          savedState.protagonistName.last);
       wait = this.loadSavedRoom(savedState);
     } else {
       wait = newGame(this);
@@ -62,13 +56,27 @@ export class GameState {
     wait.then(() => {
       setTimeout(() => {
         combineLatest([this.room$, this.inventory$, this.roomStates$])
-          .pipe(debounceTime(100))
-          .subscribe(() => {
-            this.save();
-            console.log('game state saved');
-          });
+            .pipe(debounceTime(100))
+            .subscribe(() => {
+              this.save();
+              console.log('game state saved');
+            });
       }, 1000);
     });
+  }
+
+  grabItem(item: InventoryWithId) {
+    this.grabbedItem = item;
+    document.body.classList.add('grabbing');
+  }
+
+  dropItem() {
+    this.grabbedItem = undefined;
+    document.body.classList.remove('grabbing');
+  }
+
+  getGrabbedItem() {
+    return this.grabbedItem;
   }
 
   markReady() {
@@ -80,7 +88,7 @@ export class GameState {
     this.setRoomStates(room.init.states);
   }
 
-  getSaveState(): SavedState | undefined {
+  getSaveState(): SavedState|undefined {
     const savedState = window.localStorage.getItem(AGENCY_SAVE_STATE);
     if (!savedState) {
       return;

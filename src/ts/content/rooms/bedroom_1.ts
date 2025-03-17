@@ -22,7 +22,13 @@ export const bedroom_1: Room = {
   enter: {
     hallway_1: {quote: 'Home, sweet temporary home.', coords: {x: 0, y: 0}},
     default: {
-      quote: 'Okay, first day in the rest of my life. Here we go.',
+      quote: [
+        'n:{{p}} wakes up in a small bedroom, eager to start a new day.',
+        `I don't know if I would go that far.`,
+        `n:{{p}} wakes up in a small bedroom, marginally capable of starting a new day.`,
+        `That's more like it.`,
+        `First day in the rest of my life, here we go.`
+      ],
       coords: {x: 650, y: 670},
     },
   },

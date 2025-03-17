@@ -108,7 +108,7 @@ export async function printDialog(
     thisText.match(matcher) ?? [];
 
   // TODO: Get the speaker name from character data.
-  const speakerName = state.getProtagonistName();
+  const speakerName = characterId === 'n' ? '' : state.getProtagonistName();
 
   const placeholder = document
     .querySelector('.templates > .quote')!
@@ -142,6 +142,7 @@ export async function printDialog(
     width: quoteWidth + 30,
     height: quoteHeight + 30,
   });
+  container.classList.add(characterId);
 
   const quoteContents = htmlObject.querySelector(
     '.quote-contents'
@@ -193,7 +194,7 @@ export function extractIdFromSvg(fullSvg: string, idToGrab?: string): string {
     if (useId) {
       const wrong = document.getElementById(useId);
       if (wrong?.tagName === 'g') {
-        const right = wrong.childNodes[1] as SVGElement;
+        const right = wrong.querySelector('*') as SVGElement;
         if (right) {
           const rightId = right.getAttribute('id');
           if (rightId) {

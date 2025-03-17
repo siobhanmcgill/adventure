@@ -22,6 +22,8 @@ export const inventory: InventoryList = {
     },
   },
   empty_thc_capsule: {
+    name: 'Empty capsules',
+    description: 'Once filled with perfectly harmless inhalable drugs, now they are just useless metal tubes.',
     artwork: {
       url: MAIN_INVENTORY_ART,
       layerId: 'capsules',
@@ -68,8 +70,6 @@ export const inventory: InventoryList = {
       viewBox: '0 0 150, 150',
     },
   },
-  // 'cup': {
-  // },
   // 'cup_of_water': {
   //   description: 'It\'s a glass of water. For when I want to wat.',
   //   use: {
