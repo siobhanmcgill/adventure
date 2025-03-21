@@ -1,13 +1,17 @@
-export type Quote = string|string[];
+export type Quote = string | string[];
 
-export type ActionOptions = 'look'|'interact'|'pickup'|'talk';
+export type ActionOptions = 'look' | 'interact' | 'pickup' | 'talk';
+export type ActionOptionsWithState = `${'name' | ActionOptions}${
+  | '.'
+  | '#'}${string}`;
+export type RoomObjectKey = 'name' | ActionOptionsWithState | ActionOptions;
 
 export interface SvgSource {
   url: URL;
   layerId?: string;
   viewBox: string;
   // Indicates the position in the artwork that is treated as the origin.
-  coords?: {x: number, y: number};
+  coords?: { x: number; y: number };
 }
 
 export interface Action {
@@ -37,11 +41,11 @@ export interface StateList {
   // The state ID is applied as a class to the SVG.
   [stateId: string]: {
     // These messages will show on an interval
-    idle?: Quote
-  }
+    idle?: Quote;
+  };
 }
 
-export interface RoomObject {
+export type RoomObject = {
   // If not set, the room object ID will be used
   // name?: string;
 
@@ -49,11 +53,11 @@ export interface RoomObject {
   // Could be action.state to apply only to a specific state.
   // Could also be use#itemId to trigger an action when that item is used on
   // this.
-  [action: string]: string|string[]|Action;
-}
+  [index in 'name' | ActionOptionsWithState | ActionOptions]?: Quote | Action;
+};
 
 export interface RoomObjectList {
-  [roomObjectId: string]: RoomObject
+  [roomObjectId: string]: RoomObject;
 }
 
 // Data to set up a room.
@@ -64,6 +68,11 @@ export interface RoomInit {
   protagonistScale: number;
 }
 
+export interface RoomEntry {
+  coords: { x: number; y: number };
+  quote: Quote;
+}
+
 export interface Room {
   roomId: string;
   init: RoomInit;
@@ -72,7 +81,7 @@ export interface Room {
   // artwork: string;
   // Text shown when the Protagonist enters the room.
   enter: {
-    [from: string|'default']: {coords: {x: number; y: number}, quote: Quote}
+    [from: string | 'default']: RoomEntry;
   };
 
   objects: RoomObjectList;
@@ -80,7 +89,7 @@ export interface Room {
 }
 
 export interface RoomList {
-  [roomId: string]: Room
+  [roomId: string]: Room;
 }
 
 // Will probably add artwork and coords
@@ -97,7 +106,7 @@ export interface PopupList {
 
 export interface InventoryItem {
   name?: string;
-  description?: string;
+  description?: Quote;
   artwork: SvgSource;
 
   fallbackUse?: Quote;
@@ -107,7 +116,7 @@ export interface InventoryItem {
     // Also includes the unique id 'protagonist' which is what happens if this
     // is
     // dropped on the protagonist.
-    [itemId: string|'protagonist']: Quote|Action;
+    [itemId: string | 'protagonist' | 'this' | 'talk']: Quote | Action;
   };
 }
 
@@ -122,5 +131,5 @@ export interface CharacterStyle {
 
 export interface Character {
   id: string;
-  styles: {[style: string]: CharacterStyle;}
+  styles: { [style: string]: CharacterStyle };
 }

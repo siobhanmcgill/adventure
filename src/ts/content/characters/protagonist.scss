@@ -1,11 +1,20 @@
-@use "../../../styles/mixins" as m;
-
+@use '../../../styles/mixins' as m;
 
 .protagonist {
-  #{m.svgLabel("pants")} {
-    opacity: 1;
+  #{m.svgLabel("mouth open")} {
+    display: none;
   }
-  #{m.svgLabel("no-pants")} {
-    opacity: 0;
+
+  &.talking {
+    #{m.svgLabel("mouth open")} {
+      transform-box: fill-box;
+      transform-origin: 50%;
+      display: block;
+      animation: mouthTalk 1s infinite;
+    }
+
+    #{m.svgLabel("mouth")} {
+      display: none;
+    }
   }
 }

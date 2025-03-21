@@ -1,10 +1,10 @@
 import {ActionOptions} from './types';
 
-export const FALLBACTIONS: {[index: string]: string} = {
-  look: "I don't see anything special.",
-  use: 'For what?',
-  pickup: "I don't think I can.",
-  talk: "I don't want to talk to that.",
+export const FALLBACTIONS: {[index in ActionOptions]: string} = {
+  look: `I don't see anything special.`,
+  interact: `How does one use that?`,
+  pickup: `I can't pick that up.`,
+  talk: `I don't feel like talking. Er, forget I said this.`,
 };
 
 export const FALLBACK_USE_ITEM_WITH = `These things don't go together.`;

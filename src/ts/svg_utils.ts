@@ -1,6 +1,6 @@
-import {GameState} from './state';
-import {Quote} from './types';
-import {formatString, onBodyClick, typeEffect} from './utils';
+import { GameState } from './state';
+import { Quote } from './types';
+import { formatString, onBodyClick, typeEffect } from './utils';
 
 export function getSvg(): SVGElement {
   return document.querySelector('svg')!;
@@ -85,21 +85,32 @@ export function injectHtml(
   ) as SVGForeignObjectElement;
   container.appendChild(htmlObject);
   getSvg().appendChild(container);
-  return {container, htmlObject};
+  return { container, htmlObject };
 }
 
+// TODO: Positions are wrong when the SVG is smaller than 1024x768
 export function getPosition(element: SVGElement) {
-  let {left, top, width, height} = element.getBoundingClientRect();
-  const {left: svgX, top: svgY} = getSvg()
+  let { left, top, width, height } = element.getBoundingClientRect();
+  const { left: svgX, top: svgY } = getSvg()
     .querySelector('.room')!
     .getBoundingClientRect();
-  return {left: left - svgX, top: top - svgY, width, height};
+  return { left: left - svgX, top: top - svgY, width, height };
+}
+
+function setPosition(container: SVGElement, x: number, y: number) {
+  const { left: svgX, top: svgY } = getSvg()
+    .querySelector('.room')!
+    .getBoundingClientRect();
+  setSvgAttribute(container, 'x', String(x - (svgX + TOOLTIP_WIDTH / 2)));
+  setSvgAttribute(container, 'y', String(y - (svgY + (TOOLTIP_HEIGHT + 10))));
 }
 
 export async function printDialog(
   quote: Quote,
   state: GameState
 ): Promise<void> {
+  document.body.classList.remove('actions-available');
+
   const text = ([] as string[]).concat(quote);
   const thisText = text.shift() ?? '';
 
@@ -120,7 +131,7 @@ export async function printDialog(
     dialogText ?? thisText,
     state
   );
-  const {width: quoteWidth, height: quoteHeight} =
+  const { width: quoteWidth, height: quoteHeight } =
     placeholder.getBoundingClientRect();
 
   const speakerElement = getSvg().querySelector(
@@ -128,36 +139,63 @@ export async function printDialog(
   ) as SVGElement;
   let x = 50;
   let y = 20;
+  let quoteIsToLeft = false;
+  let quoteIsAbove = false;
   if (speakerElement) {
-    let {left, top, width} = getPosition(speakerElement);
-    x = left > quoteWidth ? left - (quoteWidth - width / 2) : left + width / 2;
-    y = top - (quoteHeight + 30);
-
-    speakerElement.classList.add('talking');
+    let { left, top, width } = getPosition(speakerElement);
+    if (left > quoteWidth) {
+      x = left - (quoteWidth - width / 2);
+      quoteIsToLeft = true;
+    } else {
+      x = left + width / 2;
+    }
+    if (top > quoteHeight) {
+      y = top - (quoteHeight + 30);
+      quoteIsAbove = true;
+    }
   }
 
-  const {container, htmlObject} = injectHtmlFromTemplate('.quote', {
+  const { container, htmlObject } = injectHtmlFromTemplate('.quote', {
     x,
     y,
     width: quoteWidth + 30,
     height: quoteHeight + 30,
   });
   container.classList.add(characterId);
+  if (quoteIsToLeft) {
+    container.classList.add('to-left');
+  }
+  if (quoteIsAbove) {
+    container.classList.add('above');
+  }
 
   const quoteContents = htmlObject.querySelector(
     '.quote-contents'
   )! as HTMLDivElement;
   quoteContents.innerHTML =
     placeholder.querySelector('.quote-contents')!.innerHTML;
-  // placeholder.remove();
-  htmlObject.querySelector('.character')!.textContent = speakerName;
+  placeholder.remove();
+
+  if ((quoteContents.textContent ?? '').length < 5) {
+    htmlObject.querySelector('.character')!.remove();
+  } else {
+    htmlObject.querySelector('.character')!.textContent = speakerName;
+  }
+
+  if (
+    quoteContents.textContent &&
+    quoteContents.textContent !== '...' &&
+    speakerElement
+  ) {
+    speakerElement.classList.add('talking');
+  }
 
   await typeEffect(quoteContents, effects?.includes('slow'));
 
   if (speakerElement) {
     setTimeout(() => {
       speakerElement.classList.remove('talking');
-    }, 700);
+    }, 500);
   }
 
   await onBodyClick(true);
@@ -232,15 +270,6 @@ export function extractIdFromSvg(fullSvg: string, idToGrab?: string): string {
 const TOOLTIP_WIDTH = 500;
 const TOOLTIP_HEIGHT = 40;
 
-// TODO: Positions are wrong when the SVG is smaller than 1024x768
-function setPosition(container: SVGElement, x: number, y: number) {
-  const {left: svgX, top: svgY} = getSvg()
-    .querySelector('.room')!
-    .getBoundingClientRect();
-  setSvgAttribute(container, 'x', String(x - (svgX + TOOLTIP_WIDTH / 2)));
-  setSvgAttribute(container, 'y', String(y - (svgY + (TOOLTIP_HEIGHT + 10))));
-}
-
 export function tooltip(target: SVGElement) {
   let container: SVGForeignObjectElement | undefined;
   let timer: number | undefined;
@@ -250,7 +279,7 @@ export function tooltip(target: SVGElement) {
       window.clearTimeout(timer);
       timer = undefined;
     }
-    const {clientX: x, clientY: y} = e;
+    const { clientX: x, clientY: y } = e;
     if (container) {
       container.querySelector('.tooltip')!.textContent = text;
       setPosition(container, x, y);
@@ -272,7 +301,7 @@ export function tooltip(target: SVGElement) {
     container.querySelector('.tooltip')!.textContent = text;
     container.classList.add('show');
 
-    const {clientX: x, clientY: y} = e;
+    const { clientX: x, clientY: y } = e;
 
     setPosition(container, x, y);
   });

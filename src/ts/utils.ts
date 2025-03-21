@@ -1,16 +1,31 @@
-import {GameState} from './state';
-import {getSvg} from './svg_utils';
+import { Action } from 'rxjs/internal/scheduler/Action';
+import { GameState } from './state';
+import { getSvg } from './svg_utils';
+import {
+  ActionOptions,
+  ActionOptionsWithState,
+  RoomObject,
+  RoomObjectKey,
+} from './types';
 
 export function onBodyClick(capture = false) {
-  return new Promise<void>(resolve => {
+  return new Promise<void>((resolve) => {
     setTimeout(() => {
-      document.body.addEventListener('click', (event: MouseEvent) => {
-        if (capture) {
-          event.preventDefault();
-          event.stopPropagation();
-        }
-        resolve();
-      }, {capture, once: true});
+      if (capture) {
+        document.body.classList.remove('actions-available');
+      }
+      document.body.addEventListener(
+        'click',
+        (event: MouseEvent) => {
+          if (capture) {
+            event.preventDefault();
+            event.stopPropagation();
+          }
+          resolve();
+          document.body.classList.add('actions-available');
+        },
+        { capture, once: true }
+      );
     });
   });
 }
@@ -21,12 +36,13 @@ export function onBodyClick(capture = false) {
  * Newlines will become paragraphs.
  */
 export function formatString(input: string, state: GameState): string {
-  return input.replace(/_(.+)_/, '<em>$1</em>')
-      .replace('{{p}}', state.getProtagonistName())
-      .split('\n')
-      .filter(p => !!p)
-      .map(p => `<p>${p}</p>`)
-      .join('');
+  return input
+    .replace(/_(.+)_/, '<em>$1</em>')
+    .replace('{{p}}', state.getProtagonistName())
+    .split('\n')
+    .filter((p) => !!p)
+    .map((p) => `<p>${p}</p>`)
+    .join('');
 }
 
 export async function loadStyles(id: string, styleUrl: URL) {
@@ -43,12 +59,13 @@ export async function loadStyles(id: string, styleUrl: URL) {
   document.body.appendChild(styleElement);
 }
 
-export function findMatchingKey(
-    data: {[index: string]: unknown}, base: string, states: string[]) {
-  const keys = Object.keys(data);
-  let matchingKey: string = base;
-  states.some(s => {
-    const thisAction = `${base}.${s}`;
+export function findMatchingKey<
+  T extends { [index in string | `${string}.${string}`]: unknown }
+>(data: T, base: string, states: string[]): keyof T {
+  const keys = Object.keys(data) as Array<keyof T>;
+  let matchingKey: keyof T = base;
+  states.some((s) => {
+    const thisAction: keyof T = `${base}.${s}`;
     const pass = keys.includes(thisAction);
     if (pass) {
       matchingKey = thisAction;
@@ -70,7 +87,9 @@ export function findMatchingKey(
  */
 
 export async function typeEffect(
-    element: HTMLElement, slow = false): Promise<void> {
+  element: HTMLElement,
+  slow = false
+): Promise<void> {
   const elementClone = element.cloneNode(true) as HTMLElement;
 
   const placeholder = document.createElement('div');
@@ -84,25 +103,56 @@ export async function typeEffect(
   if (slow) {
     time *= 10;
   }
-  return await iterateOverChildren(elementClone, element, time);
+
+  let canceller = { cancelled: false };
+
+  const cancelCallback = (event: MouseEvent) => {
+    console.log('cancelling!', canceller);
+    if (!canceller.cancelled) {
+      canceller.cancelled = true;
+      element.innerHTML = elementClone.innerHTML;
+
+      event.preventDefault();
+      event.stopPropagation();
+    }
+  };
+  setTimeout(() => {
+    document.body.addEventListener('click', cancelCallback, { once: true });
+  });
+
+  await iterateOverChildren(elementClone, element, time, canceller);
+
+  document.body.removeEventListener('click', cancelCallback);
 }
 
 async function iterateOverChildren(
-    clone: HTMLElement|ChildNode, originalParent: HTMLElement,
-    charTime: number): Promise<void> {
+  clone: HTMLElement | ChildNode,
+  originalParent: HTMLElement,
+  charTime: number,
+  canceller: { cancelled: boolean }
+): Promise<void> {
+  if (canceller.cancelled) {
+    return;
+  }
   if (clone.hasChildNodes()) {
     const children = clone.childNodes;
     for (const child of children) {
-      if (child.nodeType === Node.TEXT_NODE &&
-          (child.textContent ?? '').length > 0) {
+      if (
+        child.nodeType === Node.TEXT_NODE &&
+        (child.textContent ?? '').length > 0
+      ) {
         const newTextNode = document.createTextNode('');
         originalParent.appendChild(newTextNode);
         await doChar(
-            (child.textContent ?? '').split(''), newTextNode, charTime);
+          (child.textContent ?? '').split(''),
+          newTextNode,
+          charTime,
+          canceller
+        );
       } else if (child.nodeType !== Node.TEXT_NODE) {
         const thisChildClone = child.cloneNode() as HTMLElement;
         originalParent.appendChild(thisChildClone);
-        await iterateOverChildren(child, thisChildClone, charTime);
+        await iterateOverChildren(child, thisChildClone, charTime, canceller);
       } else {
         originalParent.appendChild(child.cloneNode());
       }
@@ -111,13 +161,22 @@ async function iterateOverChildren(
 }
 
 async function doChar(
-    chars: string[], to: ChildNode|HTMLElement, time: number): Promise<void> {
+  chars: string[],
+  to: ChildNode | HTMLElement,
+  time: number,
+  canceller: { cancelled: boolean }
+): Promise<void> {
+  if (canceller.cancelled) {
+    return;
+  }
   const thisChar = chars.shift() ?? '';
-  await new Promise(resolve => {
+  await new Promise((resolve) => {
     setTimeout(() => {
       to.textContent = (to.textContent ?? '') + thisChar;
       resolve(null);
     }, time);
   });
-  return await (chars.length ? doChar(chars, to, time) : Promise.resolve());
+  return await (chars.length
+    ? doChar(chars, to, time, canceller)
+    : Promise.resolve());
 }

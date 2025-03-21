@@ -1,4 +1,4 @@
-import {PopupList, Room, RoomList} from '../../types';
+import { PopupList, Room, RoomList } from '../../types';
 
 export const bedroom_1: Room = {
   roomId: 'bedroom_1',
@@ -20,16 +20,16 @@ export const bedroom_1: Room = {
     no_pants: {},
   },
   enter: {
-    hallway_1: {quote: 'Home, sweet temporary home.', coords: {x: 0, y: 0}},
+    hallway_1: { quote: 'Home, sweet temporary home.', coords: { x: 0, y: 0 } },
     default: {
       quote: [
         'n:{{p}} wakes up in a small bedroom, eager to start a new day.',
         `I don't know if I would go that far.`,
         `n:{{p}} wakes up in a small bedroom, marginally capable of starting a new day.`,
         `That's more like it.`,
-        `First day in the rest of my life, here we go.`
+        `First day in the rest of my life, here we go.`,
       ],
-      coords: {x: 650, y: 670},
+      coords: { x: 650, y: 670 },
     },
   },
   objects: {
@@ -39,16 +39,19 @@ export const bedroom_1: Room = {
       'talk.alarm_on': 'Shut up.',
       name: 'Clock (not beeping)',
       look: "It's a clock. It woke me up. I hate it.",
-      'use.alarm_on': {quote: "Okay, okay, I'm up.", removeState: 'alarm_on'},
-      use: "It's ready to go off again tomorrow. I can't wait.",
+      'interact.alarm_on': {
+        quote: "Okay, okay, I'm up.",
+        removeState: 'alarm_on',
+      },
+      interact: "It's ready to go off again tomorrow. I can't wait.",
       talk: 'Hey clock, I hate you.',
       pickup:
         "As much as I'd love to throw that thing out the window, I better leave it there so I can go through this again tomorrow.",
     },
     bed: {
       look: "It's a bed. It's as uncomfortable as it is empty.",
-      'use.alarm_on': 'Not with the alarm blaring like that.',
-      use: 'I wish I could, but I really need to find some work.',
+      'interact.alarm_on': 'Not with the alarm blaring like that.',
+      interact: 'I wish I could, but I really need to find some work.',
       talk: [
         'Yep, just me standing here alone talking to an empty bed.',
         "I'm doing great.",
@@ -58,13 +61,13 @@ export const bedroom_1: Room = {
       look: "It's a picture of my ex-wife. She looks happy.",
       pickup:
         'I prefer to leave the past in the past. which is why I keep that next to my bed.',
-      use: {addState: 'picture_turned_down'},
+      interact: { addState: 'picture_turned_down' },
       talk: "She doesn't want to hear from me.",
     },
     picture_down: {
       name: 'Picture (still there)',
       look: '*sigh*',
-      use: {removeState: 'picture_turned_down'},
+      interact: { removeState: 'picture_turned_down' },
       talk: ["I'm over it.", '', '{slow}Clearly.'],
     },
     computer: {
@@ -73,11 +76,11 @@ export const bedroom_1: Room = {
         "Yeah, sure, I'll just pop an entire computer in my pocket.",
         'What a concept.',
       ],
-      use: {
+      interact: {
         queue: [
-          {popup: 'intro_computer_1'},
-          {popup: 'intro_computer_2'},
-          {popup: 'intro_computer_3'},
+          { popup: 'intro_computer_1' },
+          { popup: 'intro_computer_2' },
+          { popup: 'intro_computer_3' },
         ],
         onQueueFinish: {
           quote: 'I really gotta find more work.',
@@ -88,8 +91,8 @@ export const bedroom_1: Room = {
     },
     pills: {
       look: 'My favorite little blue pills.',
-      'use.pill-picked-up': 'I already have one.',
-      use: 'I should try the "Pick up" action on them.',
+      'interact.pill-picked-up': 'I already have one.',
+      interact: 'I should try the "Pick up" action on them.',
       'pickup.pill-picked-up': 'I already have one.',
       pickup: {
         quote: 'Come here, darling.',
@@ -99,18 +102,20 @@ export const bedroom_1: Room = {
     },
     mirror: {
       look: 'Still getting used to this face. Who is she?',
-      use: "I keep looking and expecting to see the old me. Maybe I'm still dreaming.",
+      interact:
+        "I keep looking and expecting to see the old me. Maybe I'm still dreaming.",
       pickup: ["I mean, I'm vain, but am I that vain?", '', 'I guess not.'],
     },
     window: {
       look: 'I can see air cars wizzing past.',
-      use: "It won't budge. The wind would be way too high from up here anyway.",
+      interact:
+        "It won't budge. The wind would be way too high from up here anyway.",
       pickup: "Um, no, I can't pick up a window.",
       talk: 'Hello, world.',
     },
     cross: {
       look: "It was my mom's. I don't really put much stock in it.",
-      use: "I forgot the Lord's prayer a long time ago.",
+      interact: "I forgot the Lord's prayer a long time ago.",
       talk: 'Uh, "Hail Satan," I guess.',
       pickup: "People are going to think I'm some kind of religious nut.",
     },
@@ -121,6 +126,7 @@ export const bedroom_1: Room = {
         '{slow}...',
         "Yeah, I better go to Cade's today and get some more.",
       ],
+      interact: `They're empty. All it would do is make me look cool.`,
       pickup: {
         quote: 'I guess I might as well clean up after myself.',
         addItem: 'empty_thc_capsule',
@@ -128,8 +134,9 @@ export const bedroom_1: Room = {
     },
     sink: {
       look: 'I have a room with a sink in it, so that shows you where my life is right now.',
-      use: "I can't splash water on my face without it getting everywhere.",
-      'use#cup': {
+      interact:
+        "I can't splash water on my face without it getting everywhere.",
+      'interact#cup': {
         animation: 'protagonist-fillCup',
         removeItem: 'cup',
         addItem: 'cup_of_water',
@@ -137,7 +144,7 @@ export const bedroom_1: Room = {
     },
     cup: {
       look: "It's a plastiglass cup.",
-      pickup: {addItem: 'cup'},
+      pickup: { addItem: 'cup' },
       talk: [
         'If I stick my mouth inside it, I sound like a robot.',
         'Beep. Boop. I am a robot.',
@@ -146,9 +153,9 @@ export const bedroom_1: Room = {
     },
     door: {
       look: 'A medium security door, which means someone could probably hack it in fifteen seconds.',
-      'use.no_pants':
+      'interact.no_pants':
         "This isn't that kind of game. I should put some pants on first.",
-      use: 'I _would_, but this room is all that currently exists.',
+      interact: 'I _would_, but this room is all that currently exists.',
       pickup: "I can't. It's really jammed in there.",
     },
     pants: {
@@ -157,34 +164,39 @@ export const bedroom_1: Room = {
         'I mean, _they are_ my pants.',
         'Why are pants plural?',
       ],
-      use: 'How is one supposed to _use_ pants, exactly?',
+      interact: 'How is one supposed to _use_ pants, exactly?',
       talk: 'Hey pants, guess what? You get to touch my butt.',
-      pickup: {addItem: 'pants'},
+      pickup: { addItem: 'pants' },
     },
     sweater: {
       look: "It's a sweater, for when I need to sweat.",
-      pickup: {addItem: 'sweater'},
-      use: "It's dirty, and whats more it's not really my style today.",
+      pickup: { addItem: 'sweater' },
+      interact: "It's dirty, and whats more it's not really my style today.",
     },
     hamper: {
       look: "It's a hamper, for when I need to hamp.",
-      pickup: 'It isn\'t laundry day today',
-      talk: 'I\'m totally going to _do_ you later.',
-      'use#sweater': {quote: 'I feel tidier already.', removeItem: 'sweater'},
-      'use#pants': [
+      pickup: "It isn't laundry day today",
+      talk: "Hey laundry, I'm totally going to _do_ you later.",
+      'interact#sweater': {
+        removeItem: 'sweater',
+        addState: 'sweater-in-hamper',
+        quoteAfterAnimation: 'I feel tidier already.',
+      },
+      'interact#pants': [
         "I've only worn these a few days in a row, so they're still good.",
         '',
-        "Also they're my only pants right now.",
+        "Also they might be my only pants right now.",
       ],
-      'use#empty_thc_capsule': "That's for clothes, not trash, silly.",
-      'use#cup_of_water': "I don't have to, there's a laundry machine down the hall.",
+      'interact#empty_thc_capsule': "That's for clothes, not trash, silly.",
+      'interact#cup_of_water':
+        "I don't have to, there's a laundry machine down the hall.",
     },
     jacket: {
       look: 'My badass jacket. It makes me look cool, but my claim that it makes me look cool nullifies that.',
     },
     chair: {
       look: 'I know a chair when I see one.',
-      use: 'Nobody animated me sitting down yet.',
+      interact: 'Nobody animated me sitting down yet.',
     },
   },
   popups: {

@@ -19,11 +19,28 @@ body {
   font-size: 30px;
   padding: 0;
   margin: 0;
+
+  input,
+  button {
+    font-family: "Handjet", monospace;
+    font-size: 30px;
+  }
 }
 
 body {
+  &.actions-available {
+    .action-buttons {
+      opacity: 1;
+
+      button {
+        cursor: pointer;
+      }
+    }
+  }
+
   &.active-action-look {
     .screen {
+
       .item,
       .room-object,
       .character {
@@ -38,6 +55,7 @@ body {
 
   &.active-action-interact {
     .screen {
+
       .item,
       .room-object,
       .character {
@@ -52,6 +70,7 @@ body {
 
   &.active-action-pickup {
     .screen {
+
       .item,
       .room-object,
       .character {
@@ -66,6 +85,7 @@ body {
 
   &.active-action-talk {
     .screen {
+
       .item,
       .room-object,
       .character {
@@ -82,19 +102,15 @@ body {
     cursor: url("../assets/icons/hold.png") 8 10, grabbing !important;
 
     .screen {
+
       .inventory .toggle,
       .item,
       .room-object,
-      .character {
+      .character,
+      .character.protagonist {
         cursor: url("../assets/icons/drop.png") 8 7, grabbing !important;
       }
     }
-  }
-
-  input,
-  button {
-    font-family: "Handjet", monospace;
-    font-size: 30px;
   }
 }
 
@@ -122,16 +138,23 @@ body {
     position: absolute;
     top: 10px;
     left: 10px;
+    opacity: 0;
+    transition: opacity 200ms;
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+    align-items: center;
 
     button {
       background: #DDD;
       border-radius: 10px;
       border: 2px solid #333;
       padding: 4px 8px;
-      cursor: pointer;
+      cursor: default;
       box-sizing: content-box;
       width: 30px;
       height: 30px;
+      transition: border 200ms, background-color 200ms;
 
       &.active {
         border: 4px solid darkblue;
@@ -289,6 +312,19 @@ body {
   background-color: #111122;
   border-radius: 20px;
 
+  .room {
+    g {
+      opacity: 0.01 !important;
+    }
+
+    [inkscape\:label="foreground"],
+    [inkscape\:label="accessible-area"] {
+      opacity: 1 !important;
+      stroke: white !important;
+      stroke-width: 2px;
+    }
+  }
+
   [inkscape\:label="blink"] {
     animation: blink 300ms infinite;
   }
@@ -306,11 +342,6 @@ body {
       animation: eyeBlink 5s infinite;
     }
 
-    &.talking [inkscape\:label="mouth"] {
-      transform-box: fill-box;
-      transform-origin: 50%;
-      animation: mouthTalk 1s infinite;
-    }
   }
 
   g.room-object {
@@ -344,6 +375,12 @@ body {
   }
 
   .quote-container {
+    .quote {
+      position: absolute;
+      left: 0;
+      top: 0;
+    }
+
     &.n {
       .character {
         display: none;
@@ -351,6 +388,20 @@ body {
 
       .quote {
         margin-top: 0;
+      }
+    }
+
+    &.to-left {
+      .quote {
+        left: unset;
+        right: 0;
+      }
+    }
+
+    &.above {
+      .quote {
+        top: unset;
+        bottom: 0;
       }
     }
 
@@ -383,7 +434,7 @@ body {
   font-size: 30px;
   min-height: 33px;
   position: relative;
-  margin: 15px 15px 0 0;
+  margin: 15px 15px 15px 0;
   box-shadow: 10px 10px 0px rgba(0, 0, 0, 0.5);
   max-width: 530px;
 
@@ -545,11 +596,11 @@ body {
     transform: scaleY(0.25);
   }
 
-  52% {
+  51% {
     transform: scaleY(0.25);
   }
 
-  54% {
+  53% {
     transform: scaleY(1);
   }
 }

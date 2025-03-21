@@ -1,12 +1,12 @@
-import {firstValueFrom, take} from 'rxjs';
+import { firstValueFrom, take } from 'rxjs';
 
-import {FALLBACTIONS} from './constants';
-import {useItemsTogether} from './inventoryHandler';
-import {RoomHandler} from './roomHandler';
-import {GameState} from './state';
-import {createSvgElement, getSvg, printDialog, tooltip} from './svg_utils';
-import {Action, RoomObject} from './types';
-import {findMatchingKey, onBodyClick} from './utils';
+import { FALLBACTIONS } from './constants';
+import { useItemsTogether } from './inventoryHandler';
+import { RoomHandler } from './roomHandler';
+import { GameState } from './state';
+import { createSvgElement, getSvg, printDialog, tooltip } from './svg_utils';
+import { Action, RoomObject } from './types';
+import { findMatchingKey, onBodyClick } from './utils';
 
 export class ObjectHandler {
   constructor(
@@ -17,13 +17,6 @@ export class ObjectHandler {
     private readonly data: RoomObject
   ) {
     this.svgElement.classList.add('room-object');
-
-    const actions: Array<'look' | 'use' | 'pickup' | 'talk'> = [
-      'look',
-      'use',
-      'pickup',
-      'talk',
-    ];
 
     const tooltipActor = tooltip(this.svgElement);
     this.state.roomStates$.subscribe((states) => {
@@ -39,10 +32,16 @@ export class ObjectHandler {
         useItemsTogether(grabbedItem, id, data, this.state, this.roomHandler);
       } else {
         const states = (await firstValueFrom(this.state.roomStates$)).reverse();
-        const action = findMatchingKey(this.data, this.state.getActiveAction(), states);
+        const action = findMatchingKey(
+          this.data,
+          this.state.getActiveAction(),
+          states
+        );
 
         doAction(
-          this.data[action] ?? FALLBACTIONS[this.state.getActiveAction() as string] ?? `I don't know.`,
+          this.data[action] ??
+            FALLBACTIONS[this.state.getActiveAction()] ??
+            `I don't know.`,
           this.state,
           this.roomHandler
         );
@@ -84,6 +83,13 @@ export async function doAction(
       state.addRoomState(`${commitAction.addItem}-picked-up`);
     }
     state.removeFromInventory(commitAction.removeItem);
+
+    if (commitAction.animation) {
+      // ...
+    }
+    await (commitAction.quoteAfterAnimation
+      ? printDialog(commitAction.quoteAfterAnimation, state)
+      : Promise.resolve());
 
     if (!queue.length && onQueueFinish) {
       return doAction(onQueueFinish, state, roomHandler);

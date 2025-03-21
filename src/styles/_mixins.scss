@@ -15,7 +15,11 @@
     }
 
     &.#{$itemClass}-picked-up {
-      #{svgLabel($itemLabel)} {
+      .room-object#{svgLabel($itemLabel)} {
+        display: none;
+      }
+      
+      .room-object #{svgLabel($itemLabel)} {
         display: none;
       }
     }

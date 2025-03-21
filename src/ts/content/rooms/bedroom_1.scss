@@ -41,8 +41,8 @@
     }
   }
 
-  @include m.hideItems(("pants", "cup", "sweater", 
-    ("pill" "pill-to-pick-up"), ("empty_thc_capsule", "capsules")));
+  @include m.hideItems(("pants", "cup", "sweater",
+      ("pill" "pill-to-pick-up"), ("empty_thc_capsule", "capsules")));
 
   [inkscape\:label="window"] {
     [inkscape\:label="car"] {
@@ -81,15 +81,29 @@
     }
   }
 
+  #{m.svgLabel("pants")} {
+    display: block;
+  }
+
   &.no_pants {
     .protagonist {
       #{m.svgLabel("pants")} {
-        opacity: 0;
+        display: none;
       }
 
       #{m.svgLabel("no-pants")} {
-        opacity: 1;
+        display: block;
       }
+    }
+  }
+
+  #{m.svgLabel("hamper-sweater")} {
+    display: none;
+  }
+
+  &.sweater-in-hamper {
+    #{m.svgLabel("hamper-sweater")} {
+      display: block;
     }
   }
 }

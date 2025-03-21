@@ -18,6 +18,7 @@ export const inventory: InventoryList = {
         quote: 'Under the tongue with you...',
         animation: 'protagonist-takePill',
         quoteAfterAnimation: 'I feel more feminized already.',
+        removeItem: 'pill'
       },
     },
   },
@@ -45,7 +46,8 @@ export const inventory: InventoryList = {
       protagonist: {
         removeState: 'no_pants',
         animation: 'protagonist-putOnPants',
-        quoteAfterAnimation: "Don't ask me where I was keeping those.",
+        quoteAfterAnimation: ['Uh...', `Don't ask me where I was keeping those.`],
+        removeItem: 'pants',
       },
     },
   },
@@ -69,17 +71,27 @@ export const inventory: InventoryList = {
       layerId: 'sweater',
       viewBox: '0 0 150, 150',
     },
+    use: {
+      'protagonist': `I don't feel like wearing that today. I want people to think I'm cool, not cute.`
+    }
   },
-  // 'cup_of_water': {
-  //   description: 'It\'s a glass of water. For when I want to wat.',
-  //   use: {
-  //     protagonist: {
-  //       'animation': 'protagonist-drink',
-  //       'quoteAfterAnimation':
-  //           'Ahh. You can really taste the reclamation system.',
-  //       'removeItem': 'cup_of_water',
-  //       'addItem': 'cup'
-  //     }
-  //   }
-  // }
+  'cup_of_water': {
+    name: 'Cup full of water',
+    description: 'It\'s a glass of water. Looks really refreshing.',
+    artwork: {
+      url: MAIN_INVENTORY_ART,
+      layerId: 'cup-of-water',
+      viewBox: '0 0 150 150',
+    },
+    use: {
+      protagonist: {
+        'quote': 'Down the hatch.',
+        'animation': 'protagonist-drink',
+        'quoteAfterAnimation':
+            'Ahh. You can really taste the reclamation system.',
+        'removeItem': 'cup_of_water',
+        'addItem': 'cup'
+      }
+    }
+  }
 };

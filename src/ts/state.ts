@@ -1,4 +1,5 @@
 import {BehaviorSubject, combineLatest, firstValueFrom, ReplaySubject, Subject,} from 'rxjs';
+import {Action} from 'rxjs/internal/scheduler/Action';
 import {debounceTime, filter} from 'rxjs/operators';
 
 import {InventoryWithId} from './inventoryHandler';
@@ -8,7 +9,6 @@ import {RecurringPromiseSource} from './recurringPromise';
 // import {ROOMS} from './artworkMap';
 import {getSvg} from './svg_utils';
 import {ActionOptions, InventoryItem, Room} from './types';
-import { Action } from 'rxjs/internal/scheduler/Action';
 
 export const AGENCY_SAVE_STATE = 'agency_save_state';
 
@@ -57,8 +57,6 @@ export class GameState {
     }
 
     wait.then(() => {
-      this.setupActions();
-
       setTimeout(() => {
         combineLatest([this.room$, this.inventory$, this.roomStates$])
             .pipe(debounceTime(100))
@@ -85,6 +83,7 @@ export class GameState {
   }
 
   markReady() {
+    this.setupActions();
     this.readySource.next(true);
   }
 
@@ -186,12 +185,18 @@ export class GameState {
   }
 
   private setupActions(initial: ActionOptions = 'look') {
-    for (const action of ['look','interact','pickup','talk'] as ActionOptions[]) {
-      const button = document.querySelector(`.action-buttons .button-${action}`)!;
+    for (const action of ['look', 'interact', 'pickup', 'talk'] as
+         ActionOptions[]) {
+      const button =
+          document.querySelector(`.action-buttons .button-${action}`)!;
       button.addEventListener('click', (event) => {
-        document.querySelectorAll('.action-buttons button').forEach(otherButton => {
-          otherButton.classList.remove('active');
-        });
+        if (!document.body.classList.contains('actions-available')) {
+          return;
+        }
+        document.querySelectorAll('.action-buttons button')
+            .forEach(otherButton => {
+              otherButton.classList.remove('active');
+            });
         button.classList.add('active');
         this.activeAction = action;
 
@@ -207,6 +212,9 @@ export class GameState {
       });
     }
 
-    (document.querySelector(`.action-buttons .button-${initial}`) as HTMLButtonElement).click();
+    document.body.classList.add('actions-available');
+    (document.querySelector(`.action-buttons .button-${initial}`) as
+     HTMLButtonElement)
+        .click();
   }
 }
