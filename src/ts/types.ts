@@ -1,3 +1,5 @@
+export type Coord = {x: number; y: number};
+
 export type Quote = string | string[];
 
 export type ActionOptions = 'look' | 'interact' | 'pickup' | 'talk';
@@ -11,7 +13,7 @@ export interface SvgSource {
   layerId?: string;
   viewBox: string;
   // Indicates the position in the artwork that is treated as the origin.
-  coords?: { x: number; y: number };
+  coords?: Coord;
 }
 
 export interface Action {
@@ -37,6 +39,8 @@ export interface Action {
   removeItem?: string;
 }
 
+export type ActionType = Quote | Action;
+
 export interface StateList {
   // The state ID is applied as a class to the SVG.
   [stateId: string]: {
@@ -53,7 +57,7 @@ export type RoomObject = {
   // Could be action.state to apply only to a specific state.
   // Could also be use#itemId to trigger an action when that item is used on
   // this.
-  [index in 'name' | ActionOptionsWithState | ActionOptions]?: Quote | Action;
+  [index in 'name' | ActionOptionsWithState | ActionOptions]?: ActionType;
 };
 
 export interface RoomObjectList {
@@ -69,7 +73,7 @@ export interface RoomInit {
 }
 
 export interface RoomEntry {
-  coords: { x: number; y: number };
+  coords: Coord;
   quote: Quote;
 }
 
@@ -116,7 +120,7 @@ export interface InventoryItem {
     // Also includes the unique id 'protagonist' which is what happens if this
     // is
     // dropped on the protagonist.
-    [itemId: string | 'protagonist' | 'this' | 'talk']: Quote | Action;
+    [itemId: string | 'protagonist' | 'this' | 'talk']: ActionType;
   };
 }
 
@@ -127,9 +131,12 @@ export interface InventoryList {
 export interface CharacterStyle {
   artwork: SvgSource;
   styles?: URL[];
+  // How fast this character's walk cycle should move, in pixels per second.
+  speed?: number;
+  animations?: string[];
 }
 
 export interface Character {
   id: string;
-  styles: { [style: string]: CharacterStyle };
+  styles: {[style: string]: CharacterStyle};
 }

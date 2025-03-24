@@ -8,7 +8,7 @@ export const bedroom_1: Room = {
       url: new URL(`../../../../artwork/bedroom_1.svg`, import.meta.url),
       viewBox: '0 0 1024 768',
     },
-    protagonistScale: 0.95,
+    protagonistScale: 0.9,
     styles: [new URL('./bedroom_1.scss', import.meta.url)],
   },
   states: {
@@ -29,7 +29,8 @@ export const bedroom_1: Room = {
         `That's more like it.`,
         `First day in the rest of my life, here we go.`,
       ],
-      coords: { x: 650, y: 670 },
+      // coords: { x: 695, y: 640 },
+      coords: {x: 310, y: 602}
     },
   },
   objects: {
@@ -175,7 +176,8 @@ export const bedroom_1: Room = {
     },
     hamper: {
       look: "It's a hamper, for when I need to hamp.",
-      pickup: "It isn't laundry day today",
+      interact: `That only makes sense if I have something to put in there.`,
+      pickup: "It isn't laundry day today.",
       talk: "Hey laundry, I'm totally going to _do_ you later.",
       'interact#sweater': {
         removeItem: 'sweater',

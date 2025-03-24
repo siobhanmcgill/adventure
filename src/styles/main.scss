@@ -1,5 +1,6 @@
 @use 'sass:list';
 @use 'sass:math';
+@use './mixins' as m;
 
 @property --seed {
   syntax: '<number>';
@@ -164,6 +165,8 @@ body {
   }
 
   .inventory {
+    display: none;
+
     position: absolute;
     bottom: 0;
     left: 0;
@@ -305,6 +308,31 @@ body {
   }
 }
 
+.debug {
+  .main-game-svg {
+    .room {
+
+      #{m.svgLabel("middleground")},
+      #{m.svgLabel("accessible-area")} {
+        opacity: 1 !important;
+        stroke: white !important;
+        stroke-width: 2px;
+      }
+
+      .protagonist-position {
+        fill: white !important;
+        stroke-width: 0;
+      }
+    }
+
+    .path-target-line {
+      stroke-width: 1px;
+      stroke: white !important;
+      fill: none;
+    }
+  }
+}
+
 .main-game-svg {
   width: 100%;
   max-height: 100%;
@@ -312,21 +340,25 @@ body {
   background-color: #111122;
   border-radius: 20px;
 
-  .room {
-    g {
-      opacity: 0.01 !important;
-    }
-
-    [inkscape\:label="foreground"],
-    [inkscape\:label="accessible-area"] {
-      opacity: 1 !important;
-      stroke: white !important;
-      stroke-width: 2px;
-    }
+  .path-target-line {
+    fill: none;
+    stroke: none;
   }
 
-  [inkscape\:label="blink"] {
+  #{m.svgLabel("blink")} {
     animation: blink 300ms infinite;
+  }
+
+  .room {
+    #{m.svgLabel("accessible-area")} {
+      stroke: transparent !important;
+      // No fill is necessary so the floor underneath is clickable.
+      fill: none !important;
+    }
+
+    .protagonist-position {
+      fill: transparent;
+    }
   }
 
   .character {
@@ -336,19 +368,18 @@ body {
       cursor: default;
     }
 
-    [inkscape\:label="eyes"] {
+    #{m.svgLabel("eyes")} {
       transform-box: fill-box;
       transform-origin: 50%;
       animation: eyeBlink 5s infinite;
     }
-
   }
 
   g.room-object {
     cursor: pointer;
 
     &:hover {
-      [inkscape\:label="hover"] {
+      #{m.svgLabel("hover")} {
         stroke-width: 3px;
         stroke: black;
       }

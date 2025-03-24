@@ -8,7 +8,7 @@ function play() {
   const gameState = new GameState();
 
   const roomHandler = new RoomHandler(gameState);
-  const inventoryHandler = new InventoryHandler(gameState);
+  const inventoryHandler = new InventoryHandler(gameState, roomHandler);
 
   document
     .getElementById('reset-room-btn')
@@ -22,6 +22,10 @@ function play() {
       window.localStorage.clear();
       window.location.reload();
     });
+
+  document.getElementById('debug-btn')?.addEventListener('click', async () => {
+    document.body.classList.toggle('debug');
+  });
 
   console.log(gameState);
 }

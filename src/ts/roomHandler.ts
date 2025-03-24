@@ -1,20 +1,27 @@
-import { firstValueFrom } from 'rxjs';
+import {firstValueFrom} from 'rxjs';
 
-import { getCharacter } from './lazyLoaders';
-import { ObjectHandler } from './objectHandler';
-import { GameState } from './state';
+import {getCharacter} from './lazyLoaders';
+import {ObjectHandler} from './objectHandler';
+import {GameState} from './state';
 import {
   createSvgElement,
+  getPosition,
   getSvg,
   injectHtmlFromTemplate,
   loadSvgString,
   printDialog,
   tooltip,
 } from './svg_utils';
-import { Popup, Room } from './types';
-import { formatString, loadStyles, onBodyClick, typeEffect } from './utils';
-import { useItemsTogether } from './inventoryHandler';
-import { ProtagonistHandler } from './protagonistHandler';
+import {Popup, Room} from './types';
+import {
+  formatString,
+  loadStyles,
+  onBodyClick,
+  query,
+  typeEffect,
+} from './utils';
+import {useItemsTogether} from './inventoryHandler';
+import {ProtagonistHandler} from './protagonistHandler';
 
 export class RoomHandler {
   private currentRoomId?: string;
@@ -63,12 +70,11 @@ export class RoomHandler {
       return;
     }
 
-    const { quote, text, popupStyle, quoteAfter } =
-      this.popupData.get(popupId)!;
+    const {quote, text, popupStyle, quoteAfter} = this.popupData.get(popupId)!;
 
     await (quote ? printDialog(quote, this.gameState) : Promise.resolve());
 
-    const { container, htmlObject } = injectHtmlFromTemplate('.popup-wrapper', {
+    const {container, htmlObject} = injectHtmlFromTemplate('.popup-wrapper', {
       width: '100%',
       height: '100%',
     });
@@ -84,6 +90,15 @@ export class RoomHandler {
     if (quoteAfter) {
       printDialog(quoteAfter, this.gameState);
     }
+  }
+
+  async moveProtagonistToObject(objectContainer: SVGGElement) {
+    if (this.protagonistHandler.isProtagonistCloseToObject(objectContainer)) {
+      return Promise.resolve();
+    }
+    const target = getPosition(objectContainer);
+
+    await this.protagonistHandler.moveProtagonistAsCloseAsPossibleTo(target);
   }
 
   // TODO: Break up this function.
@@ -132,14 +147,24 @@ export class RoomHandler {
       isFirstTime = true;
     }
 
-    this.accessibleArea = this.roomContainer.querySelector(
-      "[inkscape\\:label='accessible-area']"
-    ) as SVGPathElement;
+    this.accessibleArea = query('$accessible-area', this.roomContainer);
+    query<SVGPathElement>('#floor', this.roomContainer).addEventListener(
+      'click',
+      (e) => {
+        this.protagonistHandler.moveProtagonistAsCloseAsPossibleTo(
+          getPosition(new DOMRect(e.x, e.y, 1, 1))
+        );
+      }
+    );
 
     // TODO: Control where the player entered from.
     const entry = room.enter.default;
 
-    this.protagonistHandler.setupProtagonist(room, entry);
+    this.protagonistHandler.setupProtagonist(
+      room,
+      entry,
+      saveState?.protagonistPosition
+    );
 
     if (room.popups) {
       for (const key of Object.keys(room.popups)) {
@@ -148,7 +173,6 @@ export class RoomHandler {
     }
 
     await firstValueFrom(this.gameState.ready$);
-
 
     if (isFirstTime) {
       printDialog(entry.quote, this.gameState);

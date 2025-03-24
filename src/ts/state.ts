@@ -1,4 +1,10 @@
-import {BehaviorSubject, combineLatest, firstValueFrom, ReplaySubject, Subject,} from 'rxjs';
+import {
+  BehaviorSubject,
+  combineLatest,
+  firstValueFrom,
+  ReplaySubject,
+  Subject,
+} from 'rxjs';
 import {Action} from 'rxjs/internal/scheduler/Action';
 import {debounceTime, filter} from 'rxjs/operators';
 
@@ -8,7 +14,7 @@ import {newGame} from './newGame';
 import {RecurringPromiseSource} from './recurringPromise';
 // import {ROOMS} from './artworkMap';
 import {getSvg} from './svg_utils';
-import {ActionOptions, InventoryItem, Room} from './types';
+import {ActionOptions, Coord, InventoryItem, Room} from './types';
 
 export const AGENCY_SAVE_STATE = 'agency_save_state';
 
@@ -17,6 +23,8 @@ interface SavedState {
   currentRoomId: string;
   roomStates: {[index: string]: string[]};
   inventory: string[];
+  activeAction: ActionOptions;
+  protagonistPosition?: Coord;
 }
 
 export class GameState {
@@ -25,11 +33,14 @@ export class GameState {
     last: '',
   };
 
-  private readonly roomSource = new BehaviorSubject<Room|undefined>(undefined);
+  private readonly roomSource = new BehaviorSubject<Room | undefined>(
+    undefined
+  );
   readonly room$ = this.roomSource.asObservable().pipe(filter(Boolean));
 
-  private readonly inventorySource =
-      new BehaviorSubject<Set<string>>(new Set());
+  private readonly inventorySource = new BehaviorSubject<Set<string>>(
+    new Set()
+  );
   readonly inventory$ = this.inventorySource.asObservable();
 
   private readonly roomStatesSource = new BehaviorSubject<string[]>([]);
@@ -44,13 +55,16 @@ export class GameState {
 
   private activeAction: ActionOptions = 'look';
 
+  private protagonistPosition?: Coord;
+
   constructor() {
     const savedState = this.getSaveState();
     let wait: Promise<unknown>;
     if (savedState) {
       this.setProtagonistName(
-          savedState.protagonistName.first + ' ' +
-          savedState.protagonistName.last);
+        savedState.protagonistName.first + ' ' + savedState.protagonistName.last
+      );
+
       wait = this.loadSavedRoom(savedState);
     } else {
       wait = newGame(this);
@@ -59,11 +73,11 @@ export class GameState {
     wait.then(() => {
       setTimeout(() => {
         combineLatest([this.room$, this.inventory$, this.roomStates$])
-            .pipe(debounceTime(100))
-            .subscribe(() => {
-              this.save();
-              console.log('game state saved');
-            });
+          .pipe(debounceTime(100))
+          .subscribe(() => {
+            this.save();
+            console.log('game state saved');
+          });
       }, 1000);
     });
   }
@@ -82,8 +96,8 @@ export class GameState {
     return this.grabbedItem;
   }
 
-  markReady() {
-    this.setupActions();
+  markReady(initialAction: ActionOptions = 'look') {
+    this.setupActions(initialAction);
     this.readySource.next(true);
   }
 
@@ -92,7 +106,7 @@ export class GameState {
     this.setRoomStates(room.init.states);
   }
 
-  getSaveState(): SavedState|undefined {
+  getSaveState(): SavedState | undefined {
     const savedState = window.localStorage.getItem(AGENCY_SAVE_STATE);
     if (!savedState) {
       return;
@@ -109,7 +123,7 @@ export class GameState {
     this.roomSource.next(room);
     this.inventorySource.next(new Set(loadedState.inventory));
 
-    this.markReady();
+    this.markReady(loadedState.activeAction);
   }
 
   getSvgElement() {
@@ -124,6 +138,11 @@ export class GameState {
 
   getProtagonistName() {
     return this.protagonistName.first;
+  }
+
+  setProtagonistPosition(pos: Coord) {
+    this.protagonistPosition = pos;
+    this.save();
   }
 
   setRoom(room: Room) {
@@ -175,6 +194,8 @@ export class GameState {
       currentRoomId,
       roomStates: {[currentRoomId]: this.roomStatesSource.value},
       inventory: [...this.inventorySource.value.values()],
+      activeAction: this.getActiveAction(),
+      // protagonistPosition: this.protagonistPosition,
     };
 
     window.localStorage.setItem(AGENCY_SAVE_STATE, JSON.stringify(bundle));
@@ -185,27 +206,21 @@ export class GameState {
   }
 
   private setupActions(initial: ActionOptions = 'look') {
-    for (const action of ['look', 'interact', 'pickup', 'talk'] as
-         ActionOptions[]) {
-      const button =
-          document.querySelector(`.action-buttons .button-${action}`)!;
+    for (const action of [
+      'look',
+      'interact',
+      'pickup',
+      'talk',
+    ] as ActionOptions[]) {
+      const button = document.querySelector(
+        `.action-buttons .button-${action}`
+      )!;
       button.addEventListener('click', (event) => {
         if (!document.body.classList.contains('actions-available')) {
           return;
         }
-        document.querySelectorAll('.action-buttons button')
-            .forEach(otherButton => {
-              otherButton.classList.remove('active');
-            });
-        button.classList.add('active');
-        this.activeAction = action;
-
-        document.body.classList.remove('active-action-look');
-        document.body.classList.remove('active-action-interact');
-        document.body.classList.remove('active-action-pickup');
-        document.body.classList.remove('active-action-talk');
-
-        document.body.classList.add(`active-action-${action}`);
+        this.setActiveAction(action);
+        this.save();
 
         event.stopImmediatePropagation();
         event.stopPropagation();
@@ -213,8 +228,23 @@ export class GameState {
     }
 
     document.body.classList.add('actions-available');
-    (document.querySelector(`.action-buttons .button-${initial}`) as
-     HTMLButtonElement)
-        .click();
+    this.setActiveAction(initial);
+  }
+
+  private setActiveAction(action: ActionOptions) {
+    document
+      .querySelectorAll('.action-buttons button')
+      .forEach((otherButton) => {
+        otherButton.classList.remove('active');
+      });
+    document.querySelector(`.button-${action}`)!.classList.add('active');
+    this.activeAction = action;
+
+    document.body.classList.remove('active-action-look');
+    document.body.classList.remove('active-action-interact');
+    document.body.classList.remove('active-action-pickup');
+    document.body.classList.remove('active-action-talk');
+
+    document.body.classList.add(`active-action-${action}`);
   }
 }

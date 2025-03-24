@@ -30,13 +30,13 @@
 
 .bedroom_1 {
 
-  [inkscape\:label="alarm"],
-  [inkscape\:label="clock text bright"] {
+  #{m.svgLabel("alarm")},
+  #{m.svgLabel("clock text bright")} {
     opacity: 0;
   }
 
   &.alarm_on {
-    [inkscape\:label="clock text bright"] {
+    #{m.svgLabel("clock text bright")} {
       animation: blink 1s infinite;
     }
   }
@@ -44,8 +44,8 @@
   @include m.hideItems(("pants", "cup", "sweater",
       ("pill" "pill-to-pick-up"), ("empty_thc_capsule", "capsules")));
 
-  [inkscape\:label="window"] {
-    [inkscape\:label="car"] {
+  #{m.svgLabel("window")} {
+    #{m.svgLabel("car")} {
       animation: air-car 4s 1s infinite;
     }
   }

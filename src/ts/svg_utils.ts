@@ -1,6 +1,6 @@
-import { GameState } from './state';
-import { Quote } from './types';
-import { formatString, onBodyClick, typeEffect } from './utils';
+import {GameState} from './state';
+import {Coord, Quote} from './types';
+import {formatString, onBodyClick, typeEffect} from './utils';
 
 export function getSvg(): SVGElement {
   return document.querySelector('svg')!;
@@ -85,20 +85,21 @@ export function injectHtml(
   ) as SVGForeignObjectElement;
   container.appendChild(htmlObject);
   getSvg().appendChild(container);
-  return { container, htmlObject };
+  return {container, htmlObject};
 }
 
 // TODO: Positions are wrong when the SVG is smaller than 1024x768
-export function getPosition(element: SVGElement) {
-  let { left, top, width, height } = element.getBoundingClientRect();
-  const { left: svgX, top: svgY } = getSvg()
+export function getPosition(element: SVGElement | DOMRect): DOMRect {
+  let {left, top, width, height} =
+    element instanceof DOMRect ? element : element.getBoundingClientRect();
+  const {left: svgX, top: svgY} = getSvg()
     .querySelector('.room')!
     .getBoundingClientRect();
-  return { left: left - svgX, top: top - svgY, width, height };
+  return new DOMRect(left - svgX, top - svgY, width, height);
 }
 
 function setPosition(container: SVGElement, x: number, y: number) {
-  const { left: svgX, top: svgY } = getSvg()
+  const {left: svgX, top: svgY} = getSvg()
     .querySelector('.room')!
     .getBoundingClientRect();
   setSvgAttribute(container, 'x', String(x - (svgX + TOOLTIP_WIDTH / 2)));
@@ -131,7 +132,7 @@ export async function printDialog(
     dialogText ?? thisText,
     state
   );
-  const { width: quoteWidth, height: quoteHeight } =
+  const {width: quoteWidth, height: quoteHeight} =
     placeholder.getBoundingClientRect();
 
   const speakerElement = getSvg().querySelector(
@@ -142,7 +143,7 @@ export async function printDialog(
   let quoteIsToLeft = false;
   let quoteIsAbove = false;
   if (speakerElement) {
-    let { left, top, width } = getPosition(speakerElement);
+    let {left, top, width} = getPosition(speakerElement);
     if (left > quoteWidth) {
       x = left - (quoteWidth - width / 2);
       quoteIsToLeft = true;
@@ -155,7 +156,7 @@ export async function printDialog(
     }
   }
 
-  const { container, htmlObject } = injectHtmlFromTemplate('.quote', {
+  const {container, htmlObject} = injectHtmlFromTemplate('.quote', {
     x,
     y,
     width: quoteWidth + 30,
@@ -279,7 +280,7 @@ export function tooltip(target: SVGElement) {
       window.clearTimeout(timer);
       timer = undefined;
     }
-    const { clientX: x, clientY: y } = e;
+    const {clientX: x, clientY: y} = e;
     if (container) {
       container.querySelector('.tooltip')!.textContent = text;
       setPosition(container, x, y);
@@ -301,7 +302,7 @@ export function tooltip(target: SVGElement) {
     container.querySelector('.tooltip')!.textContent = text;
     container.classList.add('show');
 
-    const { clientX: x, clientY: y } = e;
+    const {clientX: x, clientY: y} = e;
 
     setPosition(container, x, y);
   });
@@ -317,4 +318,54 @@ export function tooltip(target: SVGElement) {
       text = newText;
     },
   };
+}
+
+export function createSVGPoint({x, y}: Coord) {
+  const point = (getSvg() as SVGSVGElement).createSVGPoint();
+  point.x = x;
+  point.y = y;
+  return point;
+}
+
+export function isPointWithinPath(
+  coord: Coord,
+  path?: SVGPathElement
+): Boolean {
+  if (!path) {
+    return false;
+  }
+  const point = createSVGPoint(coord);
+  return path.isPointInFill(point);
+}
+
+export function drawLine(coords: Coord[], insertAfter?: SVGElement) {
+  const d = coords
+    .map((coord, i) => {
+      if (i === 0) {
+        return `M ${coord.x}, ${coord.y}`;
+      }
+      return `L ${coord.x}, ${coord.y}`;
+    })
+    .join(' ');
+  const line = createSvgElement('path', 'path-target-line', {
+    d,
+  }) as SVGPathElement;
+  if (insertAfter) {
+    insertAfter.after(line);
+  } else {
+    getSvg().append(line);
+  }
+  return line;
+}
+
+export function getDistance(coords: Coord[], insertAfter?: SVGElement) {
+  const line = drawLine(coords, insertAfter);
+  const len = line.getTotalLength();
+  return {length: len, line};
+}
+
+export function getDist(coords: Coord[], insertAfter?: SVGElement) {
+  const {length, line} = getDistance(coords, insertAfter);
+  line.remove();
+  return length;
 }

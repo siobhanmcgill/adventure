@@ -1,12 +1,12 @@
-import { firstValueFrom, take } from 'rxjs';
+import {firstValueFrom, take} from 'rxjs';
 
-import { FALLBACTIONS } from './constants';
-import { useItemsTogether } from './inventoryHandler';
-import { RoomHandler } from './roomHandler';
-import { GameState } from './state';
-import { createSvgElement, getSvg, printDialog, tooltip } from './svg_utils';
-import { Action, RoomObject } from './types';
-import { findMatchingKey, onBodyClick } from './utils';
+import {FALLBACTIONS} from './constants';
+import {useItemsTogether} from './inventoryHandler';
+import {RoomHandler} from './roomHandler';
+import {GameState} from './state';
+import {createSvgElement, getSvg, printDialog, tooltip} from './svg_utils';
+import {Action, ActionType, Quote, RoomObject} from './types';
+import {findMatchingKey, onBodyClick, whatIs} from './utils';
 
 export class ObjectHandler {
   constructor(
@@ -27,24 +27,31 @@ export class ObjectHandler {
     // Show the action menu when you click on a thing.
     this.svgElement.addEventListener('click', async (event: MouseEvent) => {
       const grabbedItem = this.state.getGrabbedItem();
-      if (grabbedItem) {
-        // Try to use the grabbed item on this.
-        useItemsTogether(grabbedItem, id, data, this.state, this.roomHandler);
-      } else {
+
+      let actionToDo: ActionType | undefined;
+      if (!grabbedItem) {
         const states = (await firstValueFrom(this.state.roomStates$)).reverse();
         const action = findMatchingKey(
           this.data,
           this.state.getActiveAction(),
           states
         );
-
-        doAction(
+        actionToDo =
           this.data[action] ??
-            FALLBACTIONS[this.state.getActiveAction()] ??
-            `I don't know.`,
-          this.state,
-          this.roomHandler
-        );
+          FALLBACTIONS[this.state.getActiveAction()] ??
+          `I don't know.`;
+      }
+
+      // If the user is interacting with the object in some way, she should walk to there.
+      if (grabbedItem || whatIs(actionToDo) === 'action') {
+        await this.roomHandler.moveProtagonistToObject(this.svgElement);
+      }
+
+      if (grabbedItem) {
+        // Try to use the grabbed item on this.
+        useItemsTogether(grabbedItem, id, data, this.state, this.roomHandler);
+      } else {
+        doAction(actionToDo!, this.state, this.roomHandler);
       }
     });
   }

@@ -1,12 +1,34 @@
-import { Action } from 'rxjs/internal/scheduler/Action';
-import { GameState } from './state';
-import { getSvg } from './svg_utils';
+import {GameState} from './state';
+import {getSvg} from './svg_utils';
 import {
   ActionOptions,
   ActionOptionsWithState,
+  Quote,
+  Action,
   RoomObject,
   RoomObjectKey,
+  ActionType,
 } from './types';
+
+export function whatIs(input?: ActionType): 'action' | 'quote' {
+  if (
+    typeof input === 'string' ||
+    ((input as string[]).length && typeof (input as string[])[0] === 'string')
+  ) {
+    return 'quote';
+  }
+
+  return 'action';
+}
+
+export function query<T extends Element>(selector: string, parent?: Element): T {
+  // Select SVG layers by label using a $
+  if (selector.startsWith('$')) {
+    selector = `[inkscape\\:label='${selector.replace('$', '')}']`;
+  }
+
+  return (parent ?? document).querySelector(selector) as T;
+}
 
 export function onBodyClick(capture = false) {
   return new Promise<void>((resolve) => {
@@ -24,7 +46,7 @@ export function onBodyClick(capture = false) {
           resolve();
           document.body.classList.add('actions-available');
         },
-        { capture, once: true }
+        {capture, once: true}
       );
     });
   });
@@ -60,7 +82,7 @@ export async function loadStyles(id: string, styleUrl: URL) {
 }
 
 export function findMatchingKey<
-  T extends { [index in string | `${string}.${string}`]: unknown }
+  T extends {[index in string | `${string}.${string}`]: unknown}
 >(data: T, base: string, states: string[]): keyof T {
   const keys = Object.keys(data) as Array<keyof T>;
   let matchingKey: keyof T = base;
@@ -104,7 +126,7 @@ export async function typeEffect(
     time *= 10;
   }
 
-  let canceller = { cancelled: false };
+  let canceller = {cancelled: false};
 
   const cancelCallback = (event: MouseEvent) => {
     console.log('cancelling!', canceller);
@@ -117,7 +139,7 @@ export async function typeEffect(
     }
   };
   setTimeout(() => {
-    document.body.addEventListener('click', cancelCallback, { once: true });
+    document.body.addEventListener('click', cancelCallback, {once: true});
   });
 
   await iterateOverChildren(elementClone, element, time, canceller);
@@ -129,7 +151,7 @@ async function iterateOverChildren(
   clone: HTMLElement | ChildNode,
   originalParent: HTMLElement,
   charTime: number,
-  canceller: { cancelled: boolean }
+  canceller: {cancelled: boolean}
 ): Promise<void> {
   if (canceller.cancelled) {
     return;
@@ -164,7 +186,7 @@ async function doChar(
   chars: string[],
   to: ChildNode | HTMLElement,
   time: number,
-  canceller: { cancelled: boolean }
+  canceller: {cancelled: boolean}
 ): Promise<void> {
   if (canceller.cancelled) {
     return;
