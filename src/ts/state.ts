@@ -140,6 +140,10 @@ export class GameState {
     return this.protagonistName.first;
   }
 
+  getProtagonistFullName() {
+    return `${this.protagonistName.first} ${this.protagonistName.last}`;
+  }
+
   setProtagonistPosition(pos: Coord) {
     this.protagonistPosition = pos;
     this.save();

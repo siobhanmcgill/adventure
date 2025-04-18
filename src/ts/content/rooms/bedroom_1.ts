@@ -20,17 +20,18 @@ export const bedroom_1: Room = {
     no_pants: {},
   },
   enter: {
-    hallway_1: { quote: 'Home, sweet temporary home.', coords: { x: 0, y: 0 } },
+    hallway_1: { quote: 'Home, sweet, hopefully temporary home.', coords: { x: 0, y: 0 } },
     default: {
       quote: [
-        'n:{{p}} wakes up in a small bedroom, eager to start a new day.',
+        'n::{{p}} wakes up in a small bedroom, eager to start a new day.',
         `I don't know if I would go that far.`,
-        `n:{{p}} wakes up in a small bedroom, marginally capable of starting a new day.`,
+        `n::{{p}} wakes up in a small bedroom, marginally capable of starting a new day.`,
         `That's more like it.`,
         `First day in the rest of my life, here we go.`,
       ],
-      // coords: { x: 695, y: 640 },
-      coords: {x: 310, y: 602}
+      coords: { x: 695, y: 640 },
+      // To test pathfinding:
+      // coords: {x: 310, y: 602}
     },
   },
   objects: {
@@ -187,7 +188,7 @@ export const bedroom_1: Room = {
       'interact#pants': [
         "I've only worn these a few days in a row, so they're still good.",
         '',
-        "Also they might be my only pants right now.",
+        'Also they might be my only pants right now.',
       ],
       'interact#empty_thc_capsule': "That's for clothes, not trash, silly.",
       'interact#cup_of_water':

@@ -311,7 +311,6 @@ body {
 .debug {
   .main-game-svg {
     .room {
-
       #{m.svgLabel("middleground")},
       #{m.svgLabel("accessible-area")} {
         opacity: 1 !important;

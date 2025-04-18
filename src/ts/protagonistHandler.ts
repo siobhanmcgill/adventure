@@ -1,9 +1,9 @@
-import {ColdObservable} from 'rxjs/internal/testing/ColdObservable';
-import {animatePosition} from './anim_utils';
-import {useItemsTogether} from './inventoryHandler';
-import {getCharacter} from './lazyLoaders';
-import {RoomHandler} from './roomHandler';
-import {GameState} from './state';
+import { ColdObservable } from 'rxjs/internal/testing/ColdObservable';
+import { animatePosition } from './anim_utils';
+import { useItemsTogether } from './inventoryHandler';
+import { getCharacter } from './lazyLoaders';
+import { RoomHandler } from './roomHandler';
+import { GameState } from './state';
 import {
   createSvgElement,
   createSVGPoint,
@@ -17,18 +17,18 @@ import {
   printDialog,
   tooltip,
 } from './svg_utils';
-import {Character, CharacterStyle, Coord, Room, RoomEntry} from './types';
-import {findPath} from './pathfinding';
+import { Character, CharacterStyle, Coord, Room, RoomEntry } from './types';
+import { dijkstra, reducePath } from './pathfinding';
 
 export class ProtagonistHandler {
   private protagonistContainer?: SVGGElement;
   private protagonistPosition: SVGCircleElement = createSvgElement(
     'circle',
     'protagonist-position',
-    {r: 5}
+    { r: 5 }
   ) as SVGCircleElement;
 
-  private currentPosition: Coord = {x: 0, y: 0};
+  private currentPosition: Coord = { x: 0, y: 0 };
   private protagonistData?: Character;
   private activeCharacterStyle?: CharacterStyle;
   private activeCharacterScale = 1;
@@ -50,7 +50,6 @@ export class ProtagonistHandler {
     );
 
     this.activeCharacterScale = room.init.protagonistScale;
-    console.log({startingCoord, entry});
     this.currentPosition = startingCoord ?? entry.coords;
     this.protagonistContainer = createSvgElement(
       'g',
@@ -97,8 +96,8 @@ export class ProtagonistHandler {
     return (
       getDist(
         [
-          {x: startingX, y: startingY},
-          {x: endingX, y: endingY},
+          { x: startingX, y: startingY },
+          { x: endingX, y: endingY },
         ],
         this.protagonistPosition
       ) <=
@@ -107,7 +106,7 @@ export class ProtagonistHandler {
   }
 
   async moveProtagonistAsCloseAsPossibleTo(target: DOMRect): Promise<void> {
-    const targetCoord: Coord = {x: 0, y: target.bottom - target.width / 2};
+    const targetCoord: Coord = { x: 0, y: target.bottom - target.width / 2 };
     const protag = getPosition(this.protagonistPosition);
     if (target.right < protag.left) {
       targetCoord.x = target.right;
@@ -130,16 +129,16 @@ export class ProtagonistHandler {
       // Draw a line from the current coords to the clicked coord - the last point which is
       // within the accessible area is the target??
 
-      const {left: areaX, top: areaY} = getPosition(
+      const { left: areaX, top: areaY } = getPosition(
         this.roomHandler.getAccessibleArea()!
       );
 
       const coords: Coord[] = [targetCoord];
       if (targetCoord.y < areaY) {
-        coords.push({x: Math.max(areaX, targetCoord.x), y: areaY});
+        coords.push({ x: Math.max(areaX, targetCoord.x), y: areaY });
       }
       coords.push(this.currentPosition);
-      const {length, line} = getDistance(coords, this.protagonistPosition);
+      const { length, line } = getDistance(coords, this.protagonistPosition);
 
       for (let p = 20; p < length; p += 20) {
         const pos = line.getPointAtLength(p);
@@ -157,42 +156,56 @@ export class ProtagonistHandler {
 
       await this.animateProtagonistTo(gotoPoint);
     } else {
-      await printDialog(`I don't know how to get there.`, this.gameState);
+      await this.cannotGetThere();
     }
     this.gameState.setProtagonistPosition(this.currentPosition);
   }
 
+  private async cannotGetThere() {
+    await printDialog(`I don't know how to get to there.`, this.gameState);
+  }
+
   private async animateProtagonistTo(gotoPoint: Coord) {
-    const waypoints = findPath(
+    // const waypoints = findPath(
+    //   this.currentPosition,
+    //   gotoPoint,
+    //   this.roomHandler.getAccessibleArea()!
+    // );
+    const waypoints = dijkstra(
       this.currentPosition,
       gotoPoint,
       this.roomHandler.getAccessibleArea()!
     );
 
-    /** DEBUG */
-    for (const waypoint of waypoints) {
-      const circ = createSvgElement('circle', 'test-whatever', {
-        cx: waypoint.x,
-        cy: waypoint.y,
-        r: 5,
-        fill: 'blue',
-      });
-      getSvg().append(circ);
+    if (!waypoints?.length) {
+      await this.cannotGetThere();
+      return;
     }
+
+    /** DEBUG */
+    // for (const node of waypoints) {
+    //   const circ = createSvgElement('circle', 'test-whatever', {
+    //     cx: node.x,
+    //     cy: node.y,
+    //     r: 5,
+    //     fill: 'blue',
+    //   });
+    //   getSvg().append(circ);
+    // }
     /** /DEBUG */
 
-    // const length = getDist(waypoints);
+    const length = getDist(waypoints);
 
-    // const speed = this.activeCharacterStyle!.speed ?? 200;
-    // const seconds = length / speed;
+    const speed = this.activeCharacterStyle!.speed ?? 200;
+    const seconds = length / speed;
 
-    // await animatePosition(waypoints, seconds * 1000, (coord) => {
-    //   this.setProtagonistPosition(coord);
-    // });
+    await animatePosition(waypoints, seconds * 1000, (coord) => {
+      this.setProtagonistPosition(coord);
+    });
   }
 
-  private setProtagonistPosition({x, y}: Coord) {
-    this.currentPosition = {x, y};
+  private setProtagonistPosition({ x, y }: Coord) {
+    this.currentPosition = { x, y };
 
     this.protagonistPosition.setAttribute('cx', String(x));
     this.protagonistPosition.setAttribute('cy', String(y));

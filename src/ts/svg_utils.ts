@@ -115,8 +115,9 @@ export async function printDialog(
   const text = ([] as string[]).concat(quote);
   const thisText = text.shift() ?? '';
 
-  const matcher = /^(([a-z-_]+):)?({([a-z-_, ]+)})?(.*)/i;
-  const [, , characterId, , effects, dialogText] =
+  const matcher = /^(([a-z-_]+)::)?({([a-z-_:, ]+)})?((?:(?!::).)+)(::([a-z-+_]+))?/i;
+
+  const [, , characterId, , effects, dialogText, , stateControls] =
     thisText.match(matcher) ?? [];
 
   // TODO: Get the speaker name from character data.

@@ -1,5 +1,5 @@
-import {GameState} from './state';
-import {getSvg} from './svg_utils';
+import { GameState } from './state';
+import { getSvg } from './svg_utils';
 import {
   ActionOptions,
   ActionOptionsWithState,
@@ -21,7 +21,10 @@ export function whatIs(input?: ActionType): 'action' | 'quote' {
   return 'action';
 }
 
-export function query<T extends Element>(selector: string, parent?: Element): T {
+export function query<T extends Element>(
+  selector: string,
+  parent?: Element
+): T {
   // Select SVG layers by label using a $
   if (selector.startsWith('$')) {
     selector = `[inkscape\\:label='${selector.replace('$', '')}']`;
@@ -46,7 +49,7 @@ export function onBodyClick(capture = false) {
           resolve();
           document.body.classList.add('actions-available');
         },
-        {capture, once: true}
+        { capture, once: true }
       );
     });
   });
@@ -61,6 +64,7 @@ export function formatString(input: string, state: GameState): string {
   return input
     .replace(/_(.+)_/, '<em>$1</em>')
     .replace('{{p}}', state.getProtagonistName())
+    .replace('{{pp}}', state.getProtagonistFullName())
     .split('\n')
     .filter((p) => !!p)
     .map((p) => `<p>${p}</p>`)
@@ -82,7 +86,7 @@ export async function loadStyles(id: string, styleUrl: URL) {
 }
 
 export function findMatchingKey<
-  T extends {[index in string | `${string}.${string}`]: unknown}
+  T extends { [index in string | `${string}.${string}`]: unknown }
 >(data: T, base: string, states: string[]): keyof T {
   const keys = Object.keys(data) as Array<keyof T>;
   let matchingKey: keyof T = base;
@@ -126,7 +130,7 @@ export async function typeEffect(
     time *= 10;
   }
 
-  let canceller = {cancelled: false};
+  let canceller = { cancelled: false };
 
   const cancelCallback = (event: MouseEvent) => {
     console.log('cancelling!', canceller);
@@ -139,7 +143,7 @@ export async function typeEffect(
     }
   };
   setTimeout(() => {
-    document.body.addEventListener('click', cancelCallback, {once: true});
+    document.body.addEventListener('click', cancelCallback, { once: true });
   });
 
   await iterateOverChildren(elementClone, element, time, canceller);
@@ -151,7 +155,7 @@ async function iterateOverChildren(
   clone: HTMLElement | ChildNode,
   originalParent: HTMLElement,
   charTime: number,
-  canceller: {cancelled: boolean}
+  canceller: { cancelled: boolean }
 ): Promise<void> {
   if (canceller.cancelled) {
     return;
@@ -186,7 +190,7 @@ async function doChar(
   chars: string[],
   to: ChildNode | HTMLElement,
   time: number,
-  canceller: {cancelled: boolean}
+  canceller: { cancelled: boolean }
 ): Promise<void> {
   if (canceller.cancelled) {
     return;

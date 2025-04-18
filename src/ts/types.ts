@@ -2,6 +2,29 @@ export type Coord = {x: number; y: number};
 
 export type Quote = string | string[];
 
+/**
+ * Quote format:
+ * 
+ * '[speaker]::{[option]}[dialog]::+[add state]-[remove state]'
+ * 
+ * speaker, option, and states are optional
+ * 
+ * If [speaker] is not set, it will default to the protagonist.
+ * 
+ * [speaker] should be the ID of a speaker - the system will look up what their name is
+ * from the room object list.
+ * 
+ * 'n' is the narrator.
+ * 
+ * Options include:
+ * 'slow' - text appears slowly
+ * any other string here will be treated as the name of an animation
+ * 
+ * In dialog string,
+ *  {{p}} will be replaced by the protagonist's name.
+ *  {{pp}} will be the protagonist's full name.
+ */
+
 export type ActionOptions = 'look' | 'interact' | 'pickup' | 'talk';
 export type ActionOptionsWithState = `${'name' | ActionOptions}${
   | '.'
@@ -74,7 +97,7 @@ export interface RoomInit {
 
 export interface RoomEntry {
   coords: Coord;
-  quote: Quote;
+  quote?: Quote;
 }
 
 export interface Room {
