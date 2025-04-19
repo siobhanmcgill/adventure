@@ -1,3 +1,4 @@
+import { DIALOG_TEXT_DURATION } from './constants';
 import { GameState } from './state';
 import { getSvg } from './svg_utils';
 import {
@@ -125,7 +126,7 @@ export async function typeEffect(
   element.innerHTML = '';
 
   const charCount = (element.textContent ?? '').length;
-  let time = Math.min(Math.max(600 / charCount, 1), 10);
+  let time = Math.min(Math.max(DIALOG_TEXT_DURATION / charCount, 1), 10);
   if (slow) {
     time *= 10;
   }

@@ -10,3 +10,5 @@ export const FALLBACTIONS: {[index in ActionOptions]: string} = {
 export const FALLBACK_USE_ITEM_WITH = `These things don't go together.`;
 
 export const FIRST_ROOM = 'bedroom_1';
+
+export const DIALOG_TEXT_DURATION = 1000;
