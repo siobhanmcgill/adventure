@@ -1,34 +1,30 @@
-import { ColdObservable } from 'rxjs/internal/testing/ColdObservable';
-import { animatePosition } from './anim_utils';
-import { useItemsTogether } from './inventoryHandler';
-import { getCharacter } from './lazyLoaders';
-import { RoomHandler } from './roomHandler';
-import { GameState } from './state';
+import {animatePosition} from './anim_utils';
+import {useItemsTogether} from './inventoryHandler';
+import {getCharacter} from './lazyLoaders';
+import {dijkstra} from './pathfinding';
+import {RoomHandler} from './roomHandler';
+import {GameState} from './state';
 import {
   createSvgElement,
-  createSVGPoint,
-  drawLine,
   getDist,
   getDistance,
   getPosition,
-  getSvg,
   isPointWithinPath,
   loadSvgString,
   printDialog,
   tooltip,
 } from './svg_utils';
-import { Character, CharacterStyle, Coord, Room, RoomEntry } from './types';
-import { dijkstra, reducePath } from './pathfinding';
+import {Character, CharacterStyle, Coord, Room, RoomEntry} from './types';
 
 export class ProtagonistHandler {
   private protagonistContainer?: SVGGElement;
   private protagonistPosition: SVGCircleElement = createSvgElement(
     'circle',
     'protagonist-position',
-    { r: 5 }
+    {r: 5}
   ) as SVGCircleElement;
 
-  private currentPosition: Coord = { x: 0, y: 0 };
+  private currentPosition: Coord = {x: 0, y: 0};
   private protagonistData?: Character;
   private activeCharacterStyle?: CharacterStyle;
   private activeCharacterScale = 1;
@@ -96,8 +92,8 @@ export class ProtagonistHandler {
     return (
       getDist(
         [
-          { x: startingX, y: startingY },
-          { x: endingX, y: endingY },
+          {x: startingX, y: startingY},
+          {x: endingX, y: endingY},
         ],
         this.protagonistPosition
       ) <=
@@ -106,7 +102,7 @@ export class ProtagonistHandler {
   }
 
   async moveProtagonistAsCloseAsPossibleTo(target: DOMRect): Promise<void> {
-    const targetCoord: Coord = { x: 0, y: target.bottom - target.width / 2 };
+    const targetCoord: Coord = {x: 0, y: target.bottom - target.width / 2};
     const protag = getPosition(this.protagonistPosition);
     if (target.right < protag.left) {
       targetCoord.x = target.right;
@@ -123,22 +119,21 @@ export class ProtagonistHandler {
 
     let gotoPoint: Coord | undefined = undefined;
     if (isClickedPointInsideArea) {
-      // this.animateProtagonistTo({x, y});
       gotoPoint = targetCoord;
     } else {
       // Draw a line from the current coords to the clicked coord - the last point which is
       // within the accessible area is the target??
 
-      const { left: areaX, top: areaY } = getPosition(
+      const {left: areaX, top: areaY} = getPosition(
         this.roomHandler.getAccessibleArea()!
       );
 
       const coords: Coord[] = [targetCoord];
       if (targetCoord.y < areaY) {
-        coords.push({ x: Math.max(areaX, targetCoord.x), y: areaY });
+        coords.push({x: Math.max(areaX, targetCoord.x), y: areaY});
       }
       coords.push(this.currentPosition);
-      const { length, line } = getDistance(coords, this.protagonistPosition);
+      const {length, line} = getDistance(coords, this.protagonistPosition);
 
       for (let p = 20; p < length; p += 20) {
         const pos = line.getPointAtLength(p);
@@ -148,7 +143,7 @@ export class ProtagonistHandler {
           p = length;
         }
       }
-      // line.remove();
+      line.remove();
     }
 
     if (gotoPoint) {
@@ -166,11 +161,6 @@ export class ProtagonistHandler {
   }
 
   private async animateProtagonistTo(gotoPoint: Coord) {
-    // const waypoints = findPath(
-    //   this.currentPosition,
-    //   gotoPoint,
-    //   this.roomHandler.getAccessibleArea()!
-    // );
     const waypoints = dijkstra(
       this.currentPosition,
       gotoPoint,
@@ -204,8 +194,8 @@ export class ProtagonistHandler {
     });
   }
 
-  private setProtagonistPosition({ x, y }: Coord) {
-    this.currentPosition = { x, y };
+  private setProtagonistPosition({x, y}: Coord) {
+    this.currentPosition = {x, y};
 
     this.protagonistPosition.setAttribute('cx', String(x));
     this.protagonistPosition.setAttribute('cy', String(y));

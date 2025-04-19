@@ -41,6 +41,10 @@
     }
   }
 
+  #{m.svgLabel("sign glow")} {
+    animation: blink 2s infinite;
+  }
+
   @include m.hideItems(("pants", "cup", "sweater",
       ("pill" "pill-to-pick-up"), ("empty_thc_capsule", "capsules")));
 

@@ -50,6 +50,12 @@ export const bedroom_1: Room = {
       pickup:
         "As much as I'd love to throw that thing out the window, I better leave it there so I can go through this again tomorrow.",
     },
+    television: {
+      look: "It's a viewcast screen. VC is all ads these days.",
+      interact: "I promise there's nothing good on.",
+      pickup: "It's embedded in the wall, so, no.",
+      talk: "Talk to the VC screen? Who am I, my mom?"
+    },
     bed: {
       look: "It's a bed. It's as uncomfortable as it is empty.",
       'interact.alarm_on': 'Not with the alarm blaring like that.',
