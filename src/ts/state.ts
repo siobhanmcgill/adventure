@@ -5,33 +5,36 @@ import {
   ReplaySubject,
   Subject,
 } from 'rxjs';
-import {Action} from 'rxjs/internal/scheduler/Action';
-import {debounceTime, filter} from 'rxjs/operators';
+import { Action } from 'rxjs/internal/scheduler/Action';
+import { debounceTime, filter } from 'rxjs/operators';
 
-import {InventoryWithId} from './inventoryHandler';
-import {getRoom} from './lazyLoaders';
-import {newGame} from './newGame';
-import {RecurringPromiseSource} from './recurringPromise';
+import { InventoryWithId } from './inventoryHandler';
+import { getRoom } from './lazyLoaders';
+import { newGame } from './newGame';
+import { RecurringPromiseSource } from './recurringPromise';
 // import {ROOMS} from './artworkMap';
-import {getSvg} from './svg_utils';
-import {ActionOptions, Coord, InventoryItem, Room} from './types';
+import { getSvg } from './svg_utils';
+import { ActionOptions, Coord, InventoryItem, Room } from './types';
 
 export const AGENCY_SAVE_STATE = 'agency_save_state';
 
 interface SavedState {
-  protagonistName: {first: string; last: string};
+  protagonistName: { first: string; last: string };
   currentRoomId: string;
-  roomStates: {[index: string]: string[]};
+  roomStates: { [index: string]: string[] };
   inventory: string[];
   activeAction: ActionOptions;
   protagonistPosition?: Coord;
+  tags: string[];
 }
 
 export class GameState {
-  private readonly protagonistName: {first: string; last: string} = {
+  private readonly protagonistName: { first: string; last: string } = {
     first: '',
     last: '',
   };
+
+  private readonly tags: string[] = [];
 
   private readonly roomSource = new BehaviorSubject<Room | undefined>(
     undefined
@@ -57,7 +60,15 @@ export class GameState {
 
   private protagonistPosition?: Coord;
 
-  constructor() {
+  getSaveState() {
+    const rawState = window.localStorage.getItem(AGENCY_SAVE_STATE);
+    if (!rawState) {
+      return;
+    }
+    return JSON.parse(rawState) as SavedState;
+  }
+
+  loadSaveState() {
     const savedState = this.getSaveState();
     let wait: Promise<unknown>;
     if (savedState) {
@@ -104,14 +115,6 @@ export class GameState {
   async resetRoomState() {
     const room = await firstValueFrom(this.room$);
     this.setRoomStates(room.init.states);
-  }
-
-  getSaveState(): SavedState | undefined {
-    const savedState = window.localStorage.getItem(AGENCY_SAVE_STATE);
-    if (!savedState) {
-      return;
-    }
-    return JSON.parse(savedState) as SavedState;
   }
 
   private async loadSavedRoom(loadedState: SavedState) {
@@ -175,6 +178,24 @@ export class GameState {
     this.roomStatesSource.next(states);
   }
 
+  setTags(tags: string[]) {
+    this.tags.length = 0;
+    this.tags.push(...tags);
+  }
+
+  addTag(tag: string) {
+    this.tags.push(tag);
+    this.save();
+  }
+
+  getTags(): string[] {
+    return this.tags;
+  }
+
+  getTag(tag: string): number {
+    return this.tags.filter((t) => t === tag).length;
+  }
+
   addToInventory(itemId?: string) {
     if (!itemId) {
       return;
@@ -196,7 +217,7 @@ export class GameState {
     const bundle: SavedState = {
       protagonistName: this.protagonistName,
       currentRoomId,
-      roomStates: {[currentRoomId]: this.roomStatesSource.value},
+      roomStates: { [currentRoomId]: this.roomStatesSource.value },
       inventory: [...this.inventorySource.value.values()],
       activeAction: this.getActiveAction(),
       // protagonistPosition: this.protagonistPosition,

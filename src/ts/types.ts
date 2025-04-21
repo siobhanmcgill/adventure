@@ -1,28 +1,42 @@
-export type Coord = {x: number; y: number};
+export type Coord = { x: number; y: number };
 
 export type Quote = string | string[];
 
+export interface Conditional {
+  // Include this option if the player took this convo path.
+  ifPath?: string;
+  // Include this option if the state includes this.
+  ifState?: string;
+  // Include this option if the player has this tag applied.
+  ifTag?: string;
+  // Include this option is this state is not applied.
+  ifNotState?: string;
+}
+
 /**
  * Quote format:
- * 
+ *
  * '[speaker]::{[option]}[dialog]::+[add state]-[remove state]'
- * 
+ *
  * speaker, option, and states are optional
- * 
+ *
  * If [speaker] is not set, it will default to the protagonist.
- * 
+ *
  * [speaker] should be the ID of a speaker - the system will look up what their name is
  * from the room object list.
- * 
+ *
  * 'n' is the narrator.
- * 
+ * 'me' will use the convo ID (so if that matches a character, it will work).
+ *
  * Options include:
  * 'slow' - text appears slowly
  * any other string here will be treated as the name of an animation
- * 
+ *
  * In dialog string,
  *  {{p}} will be replaced by the protagonist's name.
  *  {{pp}} will be the protagonist's full name.
+ *
+ * +/-state will add or remove 'state' to the current room after the quote finishes.
  */
 
 export type ActionOptions = 'look' | 'interact' | 'pickup' | 'talk';
@@ -60,6 +74,12 @@ export interface Action {
   quoteAfterAnimation?: Quote;
   // Removes an inventory item with the given ID.
   removeItem?: string;
+  // Initiates a dialog with the given ID (if it matches a dialog in the current room).
+  // TODO: this.
+  dialog?: string;
+  // Adds a tag to the player, for future reference.
+  // TODO: This.
+  addTag?: string;
 }
 
 export type ActionType = Quote | Action;
@@ -113,6 +133,7 @@ export interface Room {
 
   objects: RoomObjectList;
   popups?: PopupList;
+  convos?: ConvoList;
 }
 
 export interface RoomList {
@@ -129,6 +150,43 @@ export interface Popup {
 
 export interface PopupList {
   [popupId: string]: Popup;
+}
+
+/**
+ * When I call 'goto'
+ * First it checks for the 'goto' path with every path leading to it.
+ * So I can specify a different convo if the player took different steps.
+ *
+ * If it has an action and a goto, do the action first.
+ */
+export interface ConvoResponseOption extends Conditional {
+  text: string;
+  action?: Action;
+  // goto: 'something' continues the convo at the something path
+  goto: string;
+  // goto.state: 'somethingelse' continues the convo at somethingelse
+  // if state is active.
+  [goto: `goto${'.' | '#' | '>'}${string}`]: string;
+}
+
+export interface ConvoQuoteParams extends Conditional {
+  quote?: Quote;
+  goto?: string;
+  responses?: ConvoResponseOption[];
+}
+
+// Only the final item in the array will be checked for goto and responses.
+export type ConvoQuote = Array<string | ConvoQuoteParams>;
+
+export interface Convo {
+  // 'default' is the entry point when initiating the dialog.
+  // 'default.state' will be the entry point when that state is active.
+  // 'something>somethingelse' will happen if something was met before somethingelse
+  [path: string]: ConvoQuote;
+}
+
+export interface ConvoList {
+  [convoId: string]: Convo;
 }
 
 export interface InventoryItem {
@@ -161,5 +219,5 @@ export interface CharacterStyle {
 
 export interface Character {
   id: string;
-  styles: {[style: string]: CharacterStyle};
+  styles: { [style: string]: CharacterStyle };
 }

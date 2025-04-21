@@ -6,7 +6,8 @@
   },
   "scripts": {
     "build": "tsc",
-    "run": "parcel src/index.html -p 1919 --open"
+    "run": "parcel src/index.html -p 1919 --open",
+    "convo": "parcel src/convo.html -p 1920 --open"
   },
   "dependencies": {
     "rxjs": "^7.8.2"

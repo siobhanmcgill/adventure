@@ -6,6 +6,7 @@ import {GameState} from './state';
 function play() {
   // TODO: Load a saved state here.
   const gameState = new GameState();
+  gameState.loadSaveState();
 
   const roomHandler = new RoomHandler(gameState);
   const inventoryHandler = new InventoryHandler(gameState, roomHandler);

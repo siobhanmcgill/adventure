@@ -1,6 +1,6 @@
-import {GameState} from './state';
-import {Coord, Quote} from './types';
-import {formatString, onBodyClick, typeEffect} from './utils';
+import { GameState } from './state';
+import { ConvoResponseOption, Coord, Quote, Room } from './types';
+import { formatString, onBodyClick, parseQuote, typeEffect } from './utils';
 
 export function getSvg(): SVGElement {
   return document.querySelector('svg')!;
@@ -85,21 +85,21 @@ export function injectHtml(
   ) as SVGForeignObjectElement;
   container.appendChild(htmlObject);
   getSvg().appendChild(container);
-  return {container, htmlObject};
+  return { container, htmlObject };
 }
 
 // TODO: Positions are wrong when the SVG is smaller than 1024x768
 export function getPosition(element: SVGElement | DOMRect): DOMRect {
-  let {left, top, width, height} =
+  let { left, top, width, height } =
     element instanceof DOMRect ? element : element.getBoundingClientRect();
-  const {left: svgX, top: svgY} = getSvg()
+  const { left: svgX, top: svgY } = getSvg()
     .querySelector('.room')!
     .getBoundingClientRect();
   return new DOMRect(left - svgX, top - svgY, width, height);
 }
 
 function setPosition(container: SVGElement, x: number, y: number) {
-  const {left: svgX, top: svgY} = getSvg()
+  const { left: svgX, top: svgY } = getSvg()
     .querySelector('.room')!
     .getBoundingClientRect();
   setSvgAttribute(container, 'x', String(x - (svgX + TOOLTIP_WIDTH / 2)));
@@ -108,20 +108,13 @@ function setPosition(container: SVGElement, x: number, y: number) {
 
 export async function printDialog(
   quote: Quote,
-  state: GameState
+  state: GameState,
+  roomData: Room
 ): Promise<void> {
   document.body.classList.remove('actions-available');
 
-  const text = ([] as string[]).concat(quote);
-  const thisText = text.shift() ?? '';
-
-  const matcher = /^(([a-z-_]+)::)?({([a-z-_:, ]+)})?((?:(?!::).)+)(::([a-z-+_]+))?/i;
-
-  const [, , characterId, , effects, dialogText, , stateControls] =
-    thisText.match(matcher) ?? [];
-
-  // TODO: Get the speaker name from character data.
-  const speakerName = characterId === 'n' ? '' : state.getProtagonistName();
+  const { characterId, effects, dialogText, speakerName, remainingText } =
+    await parseQuote(quote, roomData, state);
 
   const placeholder = document
     .querySelector('.templates > .quote')!
@@ -129,11 +122,8 @@ export async function printDialog(
   placeholder.classList.add('placeholder');
   document.body.appendChild(placeholder);
   placeholder.querySelector('.character')!.textContent = speakerName;
-  placeholder.querySelector('.quote-contents')!.innerHTML = formatString(
-    dialogText ?? thisText,
-    state
-  );
-  const {width: quoteWidth, height: quoteHeight} =
+  placeholder.querySelector('.quote-contents')!.innerHTML = dialogText;
+  const { width: quoteWidth, height: quoteHeight } =
     placeholder.getBoundingClientRect();
 
   const speakerElement = getSvg().querySelector(
@@ -144,7 +134,7 @@ export async function printDialog(
   let quoteIsToLeft = false;
   let quoteIsAbove = false;
   if (speakerElement) {
-    let {left, top, width} = getPosition(speakerElement);
+    let { left, top, width } = getPosition(speakerElement);
     if (left > quoteWidth) {
       x = left - (quoteWidth - width / 2);
       quoteIsToLeft = true;
@@ -157,7 +147,7 @@ export async function printDialog(
     }
   }
 
-  const {container, htmlObject} = injectHtmlFromTemplate('.quote', {
+  const { container, htmlObject } = injectHtmlFromTemplate('.quote', {
     x,
     y,
     width: quoteWidth + 30,
@@ -203,9 +193,18 @@ export async function printDialog(
   await onBodyClick(true);
 
   container.remove();
-  if (text.length) {
-    return printDialog(text, state);
+  if (remainingText.length) {
+    return printDialog(remainingText, state, roomData);
   }
+}
+
+export async function printResponseOptions(
+  responses: ConvoResponseOption[],
+  state: GameState,
+  onSelect: (response: ConvoResponseOption) => Promise<void>
+): Promise<HTMLElement[]> {
+  // TODO
+  return Promise.resolve([]);
 }
 
 export async function loadSvgString(
@@ -281,7 +280,7 @@ export function tooltip(target: SVGElement) {
       window.clearTimeout(timer);
       timer = undefined;
     }
-    const {clientX: x, clientY: y} = e;
+    const { clientX: x, clientY: y } = e;
     if (container) {
       container.querySelector('.tooltip')!.textContent = text;
       setPosition(container, x, y);
@@ -303,7 +302,7 @@ export function tooltip(target: SVGElement) {
     container.querySelector('.tooltip')!.textContent = text;
     container.classList.add('show');
 
-    const {clientX: x, clientY: y} = e;
+    const { clientX: x, clientY: y } = e;
 
     setPosition(container, x, y);
   });
@@ -321,7 +320,7 @@ export function tooltip(target: SVGElement) {
   };
 }
 
-export function createSVGPoint({x, y}: Coord) {
+export function createSVGPoint({ x, y }: Coord) {
   const point = (getSvg() as SVGSVGElement).createSVGPoint();
   point.x = x;
   point.y = y;
@@ -362,11 +361,11 @@ export function drawLine(coords: Coord[], insertAfter?: SVGElement) {
 export function getDistance(coords: Coord[], insertAfter?: SVGElement) {
   const line = drawLine(coords, insertAfter);
   const len = line.getTotalLength();
-  return {length: len, line};
+  return { length: len, line };
 }
 
 export function getDist(coords: Coord[], insertAfter?: SVGElement) {
-  const {length, line} = getDistance(coords, insertAfter);
+  const { length, line } = getDistance(coords, insertAfter);
   line.remove();
   return length;
 }

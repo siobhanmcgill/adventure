@@ -1,3 +1,4 @@
+import { firstValueFrom } from 'rxjs';
 import { DIALOG_TEXT_DURATION } from './constants';
 import { GameState } from './state';
 import { getSvg } from './svg_utils';
@@ -9,6 +10,7 @@ import {
   RoomObject,
   RoomObjectKey,
   ActionType,
+  Room,
 } from './types';
 
 export function whatIs(input?: ActionType): 'action' | 'quote' {
@@ -40,20 +42,90 @@ export function onBodyClick(capture = false) {
       if (capture) {
         document.body.classList.remove('actions-available');
       }
-      document.body.addEventListener(
-        'click',
-        (event: MouseEvent) => {
-          if (capture) {
-            event.preventDefault();
-            event.stopPropagation();
-          }
-          resolve();
-          document.body.classList.add('actions-available');
-        },
-        { capture, once: true }
-      );
+      const fn = (event: Event) => {
+        if ((event as KeyboardEvent).key && (event as KeyboardEvent).key !== 'Space') {
+          return;
+        }
+
+        if (capture) {
+          event.preventDefault();
+          event.stopPropagation();
+        }
+        resolve();
+        document.body.classList.add('actions-available');
+        document.body.removeEventListener('click', fn);
+        document.body.removeEventListener('keypress', fn);
+      };
+      document.body.addEventListener('click', fn, { capture, once: true });
+      document.body.addEventListener('keypress', fn, { capture, once: true });
     });
   });
+}
+
+export async function parseQuote(
+  quote: Quote,
+  roomData: Room,
+  state: GameState
+) {
+  const text = ([] as string[]).concat(quote);
+  const thisText = text.shift() ?? '';
+
+  const matcher =
+    /^(([a-z-_]+)::)?({([a-z-_:, ]+)})?((?:(?!::).)+)(::([a-z-+_]+))?/i;
+
+  const [, , characterId, , effects, dialogText, , stateControls] =
+    thisText.match(matcher) ?? [];
+
+  let speakerName = '';
+  if (!characterId) {
+    speakerName = state.getProtagonistName();
+  } else if (roomData.objects[characterId]) {
+    const states = (await firstValueFrom(state.roomStates$)).reverse();
+    const key = findMatchingKey(roomData.objects[characterId], 'name', states);
+    speakerName = (roomData.objects[characterId][key] as string) ?? '';
+  }
+
+  return {
+    characterId,
+    effects,
+    dialogText: formatString(dialogText, state),
+    stateControls,
+    speakerName,
+    remainingText: text,
+  };
+}
+
+export function parseStateControls(state: GameState, stateControls?: string) {
+  const chars = stateControls?.split('');
+  let add: boolean = true;
+  let thisState = '';
+  console.log({ chars });
+  for (const char of chars ?? []) {
+    if (char === '+' || char === '-') {
+      if (thisState) {
+        if (add) {
+          state.addRoomState(thisState);
+        } else {
+          state.removeRoomState(thisState);
+        }
+        thisState = '';
+      }
+    }
+    if (char === '+') {
+      add = true;
+    } else if (char === '-') {
+      add = false;
+    } else {
+      thisState += char;
+    }
+  }
+  if (thisState) {
+    if (add) {
+      state.addRoomState(thisState);
+    } else {
+      state.removeRoomState(thisState);
+    }
+  }
 }
 
 /**
@@ -63,7 +135,7 @@ export function onBodyClick(capture = false) {
  */
 export function formatString(input: string, state: GameState): string {
   return input
-    .replace(/_(.+)_/, '<em>$1</em>')
+    .replace(/_([^_]+)_/g, '<em>$1</em>')
     .replace('{{p}}', state.getProtagonistName())
     .replace('{{pp}}', state.getProtagonistFullName())
     .split('\n')

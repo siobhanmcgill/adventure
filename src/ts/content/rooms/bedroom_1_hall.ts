@@ -5,7 +5,7 @@ export const bedroom_1_hall: Room = {
   init: {
     states: [],
     artwork: {
-      url: new URL(''),
+      url: new URL(`../../../../artwork/bedroom_1.svg`, import.meta.url),
       viewBox: '',
     },
     protagonistScale: 1,
@@ -18,78 +18,184 @@ export const bedroom_1_hall: Room = {
   objects: {
     hallway_guy: {
       name: 'Hallway guy',
-      'name.met-hallway-guy': 'Dowb',
+      'name.player_is_mean': 'Casanova',
+      'name.met_hallway_guy': 'Wilbeany',
+      'name.player_is_double_mean': 'Horndog',
       talk: { dialog: 'hallway_guy' },
     },
   },
 
-  dialogs: {
+  convos: {
     hallway_guy: {
       default: [
         "{wave}Hi, I'm {{pp}} and I'm a fixer.",
-        'me::Oh, are you here about my toilet?',
+        'me::Oh.',
+        'me::Are you here about my toilet?',
         'Um.',
         'No.',
         'Not that kind of fixer...',
         'me::{sigh}Oh.',
         "me::Oh yeah, you're the girl who just moved in down the hall.",
         "That's me.",
-        "me::I'm Dowb. It's nice to meet you.::+met-hallway-guy",
-        "me::Welcome to the building",
-        "Thanks.",
-        "me::Most people who move in here are either down on their luck, a criminal, or both.",
-        "me::Which are you?",
+        "me::I'm Wilbeany. It's nice to meet you.::+met_hallway_guy",
+        'me::Welcome to the building',
+        'Thanks.',
+        'me::Most people who move in here are either down on their luck, a criminal, or both.',
+        'me::So which are you?',
+        {
+          goto: '1-answers',
+        },
+      ],
+      'default.met_hallway_guy': [
+        'Hello again.',
+        'me::What were you saying?',
+        {
+          goto: '1-answers',
+        },
+      ],
+      'default.player_is_mean': [
+        "Hey,, I'm sorry I said that.",
+        "me::It's okay",
+        "It's been a long week.",
+        'me::I get it.',
+        'So anyway, what was your question?',
+        'me::Um, I think I was just wondering what your deal was.',
+        {
+          goto: '1-answers',
+        },
+      ],
+      '1-answers': [
         {
           responses: [
-            {text: "I'm trying to get my life back together.", goto: '2-down-on-luck'},
-            {text: "I'm ready to make my own way in the world.", goto: '2-criminal'},
-            {text: "I guess I haven't decided yet.", goto: '2-both'}
-          ]
+            {
+              text: "Actually I'm just here temporarily.",
+              goto: '2-down-on-luck',
+            },
+            {
+              text: "Actually I'm starting my own business.",
+              goto: '2-criminal',
+            },
+            {
+              text: "Actually, I guess I haven't decided yet.",
+              goto: '2-both',
+            },
+            {
+              ifNotState: 'player_is_mean',
+              text: "Slow your roll, Casanova, I'm not interested.",
+              goto: '2-okay',
+              action: {
+                addState: 'player_is_mean',
+                addTag: 'rejected_hallway_guy',
+              },
+            },
+            {
+              ifState: 'player_is_mean',
+              text: "Cool your jets, Horndog, I'm still not interested.",
+              goto: '2-okay-alt',
+              action: {
+                addState: 'player_is_double_mean',
+                addTag: 'rejected_hallway_guy',
+              },
+            },
+          ],
         },
       ],
       '2-down-on-luck': [
-        "me::Down on your luck, then.",
-        "I don't know, I'm feeling pretty lucky.",
-        "me::Oh yeah?",
-        "Yep.",
-        "I was recently 'streamlined' from the Dynagistics Corporate Management Division.",
+        'me::Yeah, we all say that.',
+        "me::I've been saying that for over a year.",
+        "Well I'm feeling pretty lucky.",
+        'me::Oh yeah?',
+        'Yep.',
+        'I lost my job in the Dynagistics Corporate Management Division.',
+        'me::Oh hey, they fired me, too!',
         "I'm officially over my divorce.",
-        "These are my only pants.",
-        "me::Wow. Sounds pretty lucky alright."
+        'me::Congratulations?',
+        "If I don't make any money today I may be homeless soon.",
+        "me::That's true of most of the folks here.",
+        'Oh, and these are my only pants.',
+        'me::Wow. Sounds pretty lucky alright.',
+        "Well, see, now I'm free to do whatever I want.",
+        "me::And what's that?",
+        { goto: '1-answers' },
       ],
       '2-criminal': [
-        "me::A criminal, then.",
-        "I mean, if a criminal is whoever defies the megacorps, then I suppose I am."
+        'me::Criminal, it is.',
+        "Oh I'd be a terrible criminal. I'm too nice.",
+        'me::Yeah, walking up to a stranger and telling him your full name kind of gave that away.',
+        'My business is totally legitimate',
+        'me::So you have no plans to nuke the Dynagistics headquarters?',
+        'No.',
+        'Wait, what? No!',
+        "me:: I mean, I've never fantasized about that. What?",
+        'What?',
+        'me::What?',
+        'You got something against Dynagistics Corporation?',
+        'me::You bet I do. They fired me about six months ago.',
+        'Oh hey, they fired me too, a few weeks ago.',
+        'me::Unemployment buddies?',
+        "I'm self employed now.",
+        "me::Oh right, 'totally legit.'",
+        "That's right.",
+        "me::If you can't beat 'em, join 'em, eh?",
+        'me::So what is this business of yours?',
+        { goto: '3-business' },
+      ],
+      '2-down-on-luck>2-criminal': [
+        "me::And what's _that_?",
+        "What's a business?",
+        "me::{sigh}I know what a _business_ is, I mean what's _your_ business?",
+        { goto: '3-business' },
       ],
       '2-both': [
-        "me::So, both, then.",
-        "Now hold on a minute.",
-        "...",
-        "...",
-        "{slow}...",
+        'me::So, down on your luck _and_ a criminal, then.',
+        'Now hold on a minute.',
+        '...',
+        '...',
+        '{slow}...',
         "me::I'm holding . . .",
-        "{neckscratch}I guess I have no comeback.",
-        "me::I mean, no judgements here."
-      ]
+        '{neckscratch}I guess I have no comeback.',
+        'me::I mean, no judgements here.',
+        'me::You gotta be honest with yourself first.',
+        "I guess I am still used to working for a corp. Without a set of 'Direxpectations' I am just lost.",
+        "me::'Direxpectations?' You worked for Dynagistics?",
+      ],
 
-      //   "Actually, I'm trying to get my life back together.",
-      //   "me::Down on your luck, then.",
-      //   "I don't know, I'm feeling pretty lucky, all things considered.",
-      //   "me::Oh yeah?",
-      //   "Yeah.",
-      //   {
-      //     responses: [
-      //       {text: "I'm getting my business off the ground."},
-      //       {text: "I'm officially over my divorce."},
-      //       {text: "I'm "}
-      //     ]
-      //   }
+      '2-okay': [
+        'me::Weirdly hostile, but okay. I hear you.',
+        "me::I guess I'll stay out of your way, then.",
+      ],
+      '2-okay-alt': [
+        'me::Wow.',
+        "Sorry, I couldn't resist.",
+        'me::Is this all just a joke to you?',
+        {
+          responses: [
+            {
+              text: 'Yes',
+              goto: '9-yes',
+            },
+            { text: 'No', goto: '9-no' },
+            {
+              text: 'Sort of.',
+              goto: '9-sort-of',
+            },
+            {
+              text: 'The only joke is your face, slick.',
+              goto: '9-joke-is-face',
+              action: {
+                addState: 'player_is_triple_mean',
+                addTag: 'rejected_hallway_guy'
+              }
+            },
+          ],
+        },
+      ],
 
-      //   // "I'm getting my business off the ground.",
-      //   // "me::Nice.",
-      //   // "me::Is {{pp}} Industries gonna be the next big megacorp?",
-        
-      // ],
+      '3-business': [],
+
+      '9-yes': [],
+      '9-no': [],
+      '9-joke-is-face': []
     },
   },
 };

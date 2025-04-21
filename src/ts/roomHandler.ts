@@ -46,6 +46,7 @@ export class RoomHandler {
     });
 
     this.gameState.roomStates$.subscribe((states) => {
+      console.log('room state?', states);
       if (this.roomContainer) {
         this.roomContainer.classList.remove(...this.roomContainer.classList);
         this.roomContainer.classList.add(
