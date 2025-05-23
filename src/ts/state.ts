@@ -112,11 +112,6 @@ export class GameState {
     this.readySource.next(true);
   }
 
-  async resetRoomState() {
-    const room = await firstValueFrom(this.room$);
-    this.setRoomStates(room.init.states);
-  }
-
   private async loadSavedRoom(loadedState: SavedState) {
     const room = await getRoom(loadedState.currentRoomId);
     if (!room) {
@@ -220,6 +215,7 @@ export class GameState {
       roomStates: { [currentRoomId]: this.roomStatesSource.value },
       inventory: [...this.inventorySource.value.values()],
       activeAction: this.getActiveAction(),
+      tags: this.tags,
       // protagonistPosition: this.protagonistPosition,
     };
 

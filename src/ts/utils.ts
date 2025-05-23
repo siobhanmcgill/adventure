@@ -1,5 +1,5 @@
 import { firstValueFrom } from 'rxjs';
-import { DIALOG_TEXT_DURATION } from './constants';
+import { DIALOG_TEXT_DURATION, VERSION } from './constants';
 import { GameState } from './state';
 import { getSvg } from './svg_utils';
 import {
@@ -12,6 +12,10 @@ import {
   ActionType,
   Room,
 } from './types';
+
+export function getVersionString() {
+  return `Agency v${VERSION}`;
+}
 
 export function whatIs(input?: ActionType): 'action' | 'quote' {
   if (
@@ -43,7 +47,10 @@ export function onBodyClick(capture = false) {
         document.body.classList.remove('actions-available');
       }
       const fn = (event: Event) => {
-        if ((event as KeyboardEvent).key && (event as KeyboardEvent).key !== 'Space') {
+        if (
+          (event as KeyboardEvent).key &&
+          (event as KeyboardEvent).key !== 'Space'
+        ) {
           return;
         }
 
@@ -75,6 +82,8 @@ export async function parseQuote(
 
   const [, , characterId, , effects, dialogText, , stateControls] =
     thisText.match(matcher) ?? [];
+
+  console.log('parsing quote', { roomData });
 
   let speakerName = '';
   if (!characterId) {

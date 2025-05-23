@@ -14,7 +14,7 @@ function play() {
   document
     .getElementById('reset-room-btn')
     ?.addEventListener('click', async () => {
-      gameState.resetRoomState();
+      roomHandler.resetRoom();
     });
 
   document

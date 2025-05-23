@@ -1,8 +1,8 @@
-import {firstValueFrom} from 'rxjs';
+import { firstValueFrom } from 'rxjs';
 
-import {getCharacter} from './lazyLoaders';
-import {ObjectHandler} from './objectHandler';
-import {GameState} from './state';
+import { getCharacter } from './lazyLoaders';
+import { ObjectHandler } from './objectHandler';
+import { GameState } from './state';
 import {
   createSvgElement,
   getPosition,
@@ -12,7 +12,7 @@ import {
   printDialog,
   tooltip,
 } from './svg_utils';
-import {Popup, Room} from './types';
+import { Popup, Room } from './types';
 import {
   formatString,
   loadStyles,
@@ -20,8 +20,8 @@ import {
   query,
   typeEffect,
 } from './utils';
-import {useItemsTogether} from './inventoryHandler';
-import {ProtagonistHandler} from './protagonistHandler';
+import { useItemsTogether } from './inventoryHandler';
+import { ProtagonistHandler } from './protagonistHandler';
 
 export class RoomHandler {
   private currentRoomId?: string;
@@ -46,7 +46,6 @@ export class RoomHandler {
     });
 
     this.gameState.roomStates$.subscribe((states) => {
-      console.log('room state?', states);
       if (this.roomContainer) {
         this.roomContainer.classList.remove(...this.roomContainer.classList);
         this.roomContainer.classList.add(
@@ -71,11 +70,15 @@ export class RoomHandler {
       return;
     }
 
-    const {quote, text, popupStyle, quoteAfter} = this.popupData.get(popupId)!;
+    const { quote, text, popupStyle, quoteAfter } =
+      this.popupData.get(popupId)!;
 
-    await (quote ? printDialog(quote, this.gameState) : Promise.resolve());
+    const roomData = await firstValueFrom(this.room$);
+    await (quote
+      ? printDialog(quote, this.gameState, roomData)
+      : Promise.resolve());
 
-    const {container, htmlObject} = injectHtmlFromTemplate('.popup-wrapper', {
+    const { container, htmlObject } = injectHtmlFromTemplate('.popup-wrapper', {
       width: '100%',
       height: '100%',
     });
@@ -89,7 +92,7 @@ export class RoomHandler {
     container.remove();
 
     if (quoteAfter) {
-      printDialog(quoteAfter, this.gameState);
+      printDialog(quoteAfter, this.gameState, roomData);
     }
   }
 
@@ -102,8 +105,13 @@ export class RoomHandler {
     await this.protagonistHandler.moveProtagonistAsCloseAsPossibleTo(target);
   }
 
+  async resetRoom() {
+    const room = await firstValueFrom(this.room$);
+    this.initializeRoom(room, true);
+  }
+
   // TODO: Break up this function.
-  private async initializeRoom(room: Room) {
+  private async initializeRoom(room: Room, reset = false) {
     const root = getSvg();
     // TODO: Transition away from the old room(s).
     root.querySelectorAll('.room').forEach((room) => {
@@ -141,7 +149,7 @@ export class RoomHandler {
 
     const saveState = this.gameState.getSaveState();
     let isFirstTime = false;
-    if (saveState && saveState.roomStates[room.roomId]) {
+    if (!reset && saveState && saveState.roomStates[room.roomId]) {
       this.gameState.setRoomStates(saveState.roomStates[room.roomId]);
     } else {
       this.gameState.setRoomStates(room.init.states.slice());
@@ -175,8 +183,8 @@ export class RoomHandler {
 
     await firstValueFrom(this.gameState.ready$);
 
-    if (isFirstTime) {
-      printDialog(entry.quote, this.gameState);
+    if (isFirstTime && entry.quote) {
+      printDialog(entry.quote, this.gameState, room);
     }
   }
 }

@@ -2,6 +2,7 @@ import {FIRST_ROOM} from './constants';
 import {getCharacter, getRoom} from './lazyLoaders';
 import {GameState} from './state';
 import {injectHtmlFromTemplate, loadSvgString} from './svg_utils';
+import { getVersionString } from './utils';
 
 export async function newGame(state: GameState) {
   const {htmlObject} = injectHtmlFromTemplate('.input', {
@@ -10,6 +11,8 @@ export async function newGame(state: GameState) {
     width: '100%',
     height: '100%',
   });
+
+  htmlObject.querySelector('h1')!.textContent = getVersionString();
 
   htmlObject.querySelector('.text')!.innerHTML = `
   <svg></svg>

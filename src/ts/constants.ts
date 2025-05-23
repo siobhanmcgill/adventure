@@ -1,5 +1,7 @@
 import {ActionOptions} from './types';
 
+export const VERSION = '0.01a';
+
 export const FALLBACTIONS: {[index in ActionOptions]: string} = {
   look: `I don't see anything special.`,
   interact: `How does one use that?`,

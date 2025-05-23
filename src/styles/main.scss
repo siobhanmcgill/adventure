@@ -8,23 +8,201 @@
   inherits: false;
 }
 
+$color-bg: rgba(6, 137, 228, 0.4);
+
 :root {
   --seed: 0.5;
+
+  --color-blue: #0032db;
 }
 
 html,
 body {
-  background: black;
+  background: linear-gradient(#fff, #ddd);
   height: 100%;
-  font-family: "Handjet", monospace;
-  font-size: 30px;
+  font-family: "Istok Web", sans-serif;
+  font-size: 16px;
   padding: 0;
   margin: 0;
 
   input,
   button {
-    font-family: "Handjet", monospace;
-    font-size: 30px;
+    font-family: "Istok Web", sans-serif;
+    font-size: 16px;
+  }
+
+  p {
+    margin: 0;
+  }
+}
+
+button {
+  border-radius: 0.25rem;
+  background: linear-gradient(180deg,
+      rgba(212, 232, 250, 1) 0%,
+      rgba(81, 181, 252, 1) 49%,
+      rgba(6, 137, 228, 1) 50%,
+      rgba(0, 85, 145, 1) 100%);
+  border: 1px solid;
+  border-color: rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.25) rgba(0, 0, 0, 0.25) rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  color: white;
+  text-shadow: 0px 0px 2px rgba(0, 0, 0, 1);
+  font-weight: 400;
+  padding: 0.25rem 0.5rem;
+
+  @include m.aeroBorder();
+
+  &::after {
+    border-radius: 0.25rem;
+    box-shadow: 0 -2px 4px rgba(255, 255, 255, 0.25)inset;
+  }
+}
+
+.icon {
+  display: inline-block;
+  background-size: 75%;
+  background-repeat: no-repeat;
+  background-position: 50%;
+  background-color: var(--color-blue);
+  border-radius: 50%;
+
+  &.talk {
+    background-image: url(../assets/icons/talk.svg);
+  }
+}
+
+.panel {
+  display: inline-block;
+  position: relative;
+  background: $color-bg;
+  border: 1px solid rgba(0, 0, 0, 0.25);
+  color: black;
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  font-weight: 400;
+  font-size: 1rem;
+  min-height: 2rem;
+  position: relative;
+  margin: 0;
+  box-shadow: 0px 0px 1rem rgba(0, 0, 0, 0.5);
+  max-width: 530px;
+
+  @include m.aeroBorder();
+
+  .panel-title {
+    padding: 0 0.5rem 0.25rem;
+
+    h1,
+    h5 {
+      font-size: 1rem;
+      color: black;
+      text-shadow: 0px 0px 4px rgba(255, 255, 255, 1);
+      font-weight: 400;
+      margin: 0;
+    }
+  }
+
+  .panel-contents-wrapper {
+    padding: 1rem;
+    background: white;
+    border: 1px solid;
+    border-color: rgba(0, 0, 0, 0.5) rgba(0, 0, 0, 0.25) rgba(0, 0, 0, 0.25) rgba(0, 0, 0, 0.5);
+    display: flex;
+    flex-direction: row;
+    gap: 1.5rem;
+
+    .panel-icon {
+      width: 2.5rem;
+      height: 2.5rem;
+      min-width: 2.5rem;
+    }
+
+    .panel-contents {
+      flex-grow: 1;
+    }
+  }
+
+  .panel-actions {
+    display: flex;
+    align-items: flex-end;
+    width: 100%;
+    justify-content: flex-end;
+    margin-top: 0.25rem;
+    margin-bottom: -0.5rem;
+
+    .panel-actions-border {
+      display: flex;
+      width: auto;
+      padding: 0;
+      border-radius: 0.25rem 0.25rem 0 0;
+      border: 1px solid;
+      border-bottom-width: 0;
+      border-color: rgba(255, 255, 255, 0.25) rgba(255, 255, 255, 0.5) rgba(255, 255, 255, 0.05) rgba(255, 255, 255, 0.25);
+    }
+
+    button {
+      font-size: 1.5rem;
+      margin: 0;
+      border-radius: 0.25rem 0.25rem 0 0;
+      border-bottom-width: 0;
+
+      &::after {
+        border-radius: 0.25rem 0.25rem 0 0;
+      }
+    }
+  }
+}
+
+.input {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  transition: background-color 2s;
+
+  .panel-contents {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .text {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    width: 100%;
+  }
+
+  svg {
+    margin: 0 auto;
+    max-height: 300px;
+  }
+
+  p {
+    margin: 0;
+  }
+
+  input {
+    display: block;
+    padding: 5px 10px;
+  }
+
+  button {
+    align-self: flex-end;
+    padding: 4px 10px 0;
+  }
+
+  &.remove-me {
+    background-color: rgba(0, 0, 0, 0);
+
+    .quote {
+      position: relative;
+      animation: runaway 1.5s both ease-out, runawaymotion 1.5s both ease-in;
+    }
   }
 }
 
@@ -312,6 +490,7 @@ body {
 .debug {
   .main-game-svg {
     .room {
+
       #{m.svgLabel("middleground")},
       #{m.svgLabel("accessible-area")} {
         opacity: 1 !important;
@@ -337,8 +516,10 @@ body {
   width: 100%;
   max-height: 100%;
   aspect-ratio: 1.33;
-  background-color: #111122;
-  border-radius: 20px;
+  background: url(../assets/background.png);
+  background-size: 100% 100%;
+  border-radius: 1rem;
+  box-shadow: 0 0 1rem rgba(0, 0, 0, 0.5) inset;
 
   .path-target-line {
     fill: none;
@@ -401,140 +582,96 @@ body {
     background: rgba(0, 0, 139, 0.5);
     padding: 3px 5px;
     border-radius: 3px;
-    font-size: 20px;
+    font-size: 1rem;
     color: white;
   }
 
-  .quote-container {
-    .quote {
-      position: absolute;
-      left: 0;
-      top: 0;
-    }
+  // .quote-container {
+  //   .quote {
+  //     position: absolute;
+  //     left: 0;
+  //     top: 0;
+  //   }
 
-    &.n {
-      .character {
-        display: none;
-      }
+  //   &.n {
+  //     .character {
+  //       display: none;
+  //     }
 
-      .quote {
-        margin-top: 0;
-      }
-    }
+  //     .quote {
+  //       margin-top: 0;
+  //     }
+  //   }
 
-    &.to-left {
-      .quote {
-        left: unset;
-        right: 0;
-      }
-    }
+  //   &.to-left {
+  //     .quote {
+  //       left: unset;
+  //       right: 0;
+  //     }
+  //   }
 
-    &.above {
-      .quote {
-        top: unset;
-        bottom: 0;
-      }
-    }
+  //   &.above {
+  //     .quote {
+  //       top: unset;
+  //       bottom: 0;
+  //     }
+  //   }
 
-    &:not(.n) {
-      &:after {
-        content: "";
-        position: absolute;
-        display: block;
-        right: 35px;
-        bottom: 0;
-        width: 0;
-        height: 0;
-        border-style: solid;
-        border-width: 15px 8px 0;
-        border-color: darkblue transparent transparent;
-        transform: skew(20deg, 0);
-      }
-    }
-  }
+  //   &:not(.n) {
+  //     &:after {
+  //       content: "";
+  //       position: absolute;
+  //       display: block;
+  //       right: 35px;
+  //       bottom: 0;
+  //       width: 0;
+  //       height: 0;
+  //       border-style: solid;
+  //       border-width: 15px 8px 0;
+  //       border-color: darkblue transparent transparent;
+  //       transform: skew(20deg, 0);
+  //     }
+  //   }
+  // }
 }
 
 .quote {
-  display: inline-block;
-  border: 10px solid darkblue;
-  background: #DDDDDD;
-  color: black;
-  padding: 10px 15px;
-  border-radius: 5px;
-  font-weight: 400;
-  font-size: 30px;
-  min-height: 33px;
-  position: relative;
-  margin: 15px 15px 15px 0;
-  box-shadow: 10px 10px 0px rgba(0, 0, 0, 0.5);
-  max-width: 530px;
+  // display: inline-block;
+  // border: 10px solid darkblue;
+  // background: #DDDDDD;
+  // color: black;
+  // padding: 10px 15px;
+  // border-radius: 5px;
+  // font-weight: 400;
+  // font-size: 30px;
+  // min-height: 33px;
+  // position: relative;
+  // margin: 15px 15px 15px 0;
+  // box-shadow: 10px 10px 0px rgba(0, 0, 0, 0.5);
+  // max-width: 530px;
 
-  .character {
-    position: absolute;
-    top: -25px;
-    left: 10px;
-    background: #ddd;
-    font-size: 25px;
-    padding: 0 5px;
-    border: 2px solid darkblue;
-    border-radius: 5px;
-  }
+  // .character {
+  //   position: absolute;
+  //   top: -25px;
+  //   left: 10px;
+  //   background: #ddd;
+  //   font-size: 25px;
+  //   padding: 0 5px;
+  //   border: 2px solid darkblue;
+  //   border-radius: 5px;
+  // }
 
-  p {
-    margin: 0;
-  }
-}
+  max-width: 31rem;
 
-.input {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.5);
-  transition: background-color 2s;
-
-  .quote {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 20px;
-  }
-
-  .text {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-    width: 100%;
-  }
-
-  svg {
-    margin: 0 auto;
-    max-height: 300px;
-  }
-
-  p {
-    margin: 0;
-  }
-
-  input {
-    display: block;
-    padding: 5px 10px;
-  }
-
-  button {
-    align-self: flex-end;
-    padding: 4px 10px 0;
-  }
-
-  &.remove-me {
-    background-color: rgba(0, 0, 0, 0);
-
-    .quote {
-      position: relative;
-      animation: runaway 1.5s both ease-out, runawaymotion 1.5s both ease-in;
+  .panel-title {
+    .character {
+      font-weight: bold;
+      font-style: italic;
     }
+  }
+
+  p {
+    margin: 0;
   }
 }
 
