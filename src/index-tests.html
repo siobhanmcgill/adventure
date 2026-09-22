@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Agency | An Interactive Fiction Game</title>
+
+    <link
+      rel="preconnect"
+      href="https://fonts.googleapis.com" />
+    <link
+      rel="preconnect"
+      href="https://fonts.gstatic.com"
+      crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Istok+Web:ital,wght@0,400;0,700;1,400;1,700&family=Noto+Sans:ital,wght@0,100..900;1,100..900&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap"
+      rel="stylesheet" />
+
+    <link
+      href="./assets/fontawesome/css/fontawesome.css"
+      rel="stylesheet" />
+    <link
+      href="./assets/fontawesome/css/solid.css"
+      rel="stylesheet" />
+  </head>
+
+  <body>
+    <div class="screen">
+      <div class="panel main-text-panel">
+        <div class="panel-title main-title">
+          <h1>Agency | An Interactive Fiction Game</h1>
+        </div>
+
+        <div class="menu-bar"></div>
+        <div class="panel-body-wrapper">
+          <div class="toolbar">
+            <button
+              aria-label="Current Room"
+              title="Current Room"
+              class="toolbar-room-button toolbar-button">
+              <i class="fa-solid fa-couch"></i>
+            </button>
+            <button
+              aria-label="Inventory"
+              title="Inventory"
+              class="toolbar-inventory-button toolbar-button">
+              <i class="fa-solid fa-bag-shopping"></i>
+            </button>
+            <button
+              aria-label="Friends"
+              title="Friends"
+              class="toolbar-friends-button toolbar-button">
+              <i class="fa-solid fa-address-book"></i>
+            </button>
+          </div>
+
+          <div class="side-pane object-list-pane hidden">
+            <div class="side-pane-contents room-pane displaynone">
+              <h4>Current Room</h4>
+              <div class="object-list room-list"></div>
+            </div>
+
+            <div class="side-pane-contents inventory-pane displaynone">
+              <h4>Inventory</h4>
+              <div class="object-list inventory-list"></div>
+            </div>
+
+            <div class="side-pane-contents friends-pane displaynone">
+              <h4>Friends</h4>
+              <div class="object-list friends-list"></div>
+            </div>
+          </div>
+
+          <div class="panel-contents-wrapper">
+            <div class="panel-contents main-game-stream"></div>
+            <div class="click-msg">(Click or press Enter to continue)</div>
+
+            <div class="text-line prompt-line">
+              <span class="prompt-blinky">&gt;</span>
+              <input
+                type="text"
+                class="text-prompt"
+                placeholder="" />
+            </div>
+
+            <div class="scroll-to-here">&nbsp;</div>
+            <div
+              class="behind-the-scenes ignore-me just-mind-your-own-business room-container"></div>
+          </div>
+        </div>
+        <div class="bottom-bar">
+
+        </div>
+      </div>
+
+      <div class="overlays"></div>
+    </div>
+  </body>
+</html>

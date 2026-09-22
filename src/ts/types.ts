@@ -1,5 +1,9 @@
-export type Coord = { x: number; y: number };
+import {AnyGameMode} from '.';
+import {ObjectHandler} from './objectHandler';
 
+export type Coord = {x: number; y: number};
+
+// TODO: Rename this to "snippet" or "text?"
 export type Quote = string | string[];
 
 export interface Conditional {
@@ -16,61 +20,87 @@ export interface Conditional {
 /**
  * Quote format:
  *
- * '[speaker]::{[option]}[dialog]::+[add state]-[remove state]'
+ * '[speaker]::{[option]}[dialog]::+[add state]-[remove state]%[tooltiptext]'
+ * ex: `p::{slow}Here's an example line ![some image](image.svg)::+spoken%Some tooltip`
  *
  * speaker, option, and states are optional
  *
- * If [speaker] is not set, it will default to the protagonist.
+ * If [speaker] is not set, it will default to nothing (the narrative).
+ * If [speaker] is set, the text will be shown in a speech bubble.
  *
  * [speaker] should be the ID of a speaker - the system will look up what their name is
  * from the room object list.
  *
+ * 'p' is the protagonist.
  * 'n' is the narrator.
  * 'me' will use the convo ID (so if that matches a character, it will work).
  *
  * Options include:
  * 'slow' - text appears slowly
+ * 'nowait' - text mode will not wait for a keypress to go on to the next paragraph.
+ * 'left' - float left
+ * 'type' - force the typing effect (in text mode)
  * any other string here will be treated as the name of an animation
  *
  * In dialog string,
  *  {{p}} will be replaced by the protagonist's name.
  *  {{pp}} will be the protagonist's full name.
+ *  (see utils.ts formatString for details)
  *
  * +/-state will add or remove 'state' to the current room after the quote finishes.
+ *
+ * Within the text, you can also insert a picture (a file in the assets dir):
+ * . . . !\[alt text\](./assets/[whatever]) . . .
+ *
+ * You can also specify objects to be added to the set of current room objects:
+ * . . . #[objectId]>[object name]# . . .
+ * ObjectID will be used to look up the object data in the room data, and the text in object
+ * name will be clickable.
  */
-
-export type ActionOptions = 'look' | 'interact' | 'pickup' | 'talk';
-export type ActionOptionsWithState = `${'name' | ActionOptions}${
-  | '.'
-  | '#'}${string}`;
-export type RoomObjectKey = 'name' | ActionOptionsWithState | ActionOptions;
 
 export interface SvgSource {
   url: URL;
   layerId?: string;
-  viewBox: string;
-  // Indicates the position in the artwork that is treated as the origin.
+  // Width and height
+  dimensions: Coord;
+  // Indicates the position in the artwork that is treated as the origin for positioning.
   coords?: Coord;
+  // Indicates the top left corner of the artwork for viewbox purposes. If not set, we assume 0,0.
+  offset?: Coord;
 }
 
 export interface Action {
-  // The Protagonist will say something.
+  // In text mode, these are other verbs that the player can type to trigger this action.
+  alias?: string[];
+  // In text mode, this is what gets printed to the stream.
+  // This will probably be a longer, more verbose version of the quote.
+  text?: Quote;
+  // The Protagonist will say something. Text mode will use this if no text is set.
   quote?: Quote;
   // Trigger a popup defined in popups.json
   // Popup opens after the quote is done.
   popup?: string;
-  // Remove a state from the current room
+  // Run custom code, after any popups but before the "afterAnimation" options.
+  custom?: (
+    game: AnyGameMode,
+    matchingObjects?: ObjectHandler[]
+  ) => Promise<void>;
+  // Play an animation - this will play after the quote shows, but before
+  // anything else is set. Ignored in text mode.
+  animation?: string;
+  // Remove a state from the current room. This will happen immediately. If you want it
+  // after the text shows, add a line to the text / quote array with a state change (`::-somestate`)
   removeState?: string;
   // Add a state to the current room
   addState?: string;
   // Actions will be taken in order, once per time the user interacts.
-  queue?: Action[];
-  onQueueFinish?: Action;
+  queue?: ActionType[];
+  onQueueFinish?: ActionType;
   // Adds an inventory item with the given ID.
   addItem?: string;
-  // Play an animation - this will play after the quote shows, but before
-  // anything else is set.
-  animation?: string;
+  // Verbose narrative text that is shown after the animation in text mode.
+  textAfterAnimation?: Quote;
+  // Text that is shown after the animation. Text mode uses this if textAfterAnimation is not set.
   quoteAfterAnimation?: Quote;
   // Removes an inventory item with the given ID.
   removeItem?: string;
@@ -80,53 +110,107 @@ export interface Action {
   // Adds a tag to the player, for future reference.
   // TODO: This.
   addTag?: string;
+  // Sends the player to a different room after any given quotes or animations are played.
+  loadRoom?: string;
 }
 
 export type ActionType = Quote | Action;
 
+/** Metadata about states applied to a room. */
 export interface StateList {
-  // The state ID is applied as a class to the SVG.
+  // The state ID is applied as a class to the game container.
   [stateId: string]: {
     // These messages will show on an interval
     idle?: Quote;
+    // Intercept all actions to change them or do something else.
+    actionFilter?: (
+      game: AnyGameMode,
+      attemptedAction: ActionType,
+      verb: string,
+      noun?: string,
+      otherNoun?: string
+    ) => Promise<ActionType>;
+    objectNameFilter?: (
+      targetId: string,
+      attemptedName: string
+    ) => Promise<string>;
+    onApply?: (game: AnyGameMode) => any;
+    onRemove?: (game: AnyGameMode, fromApply?: any) => void;
   };
 }
 
+// The verbs the player can do.
+export type ActionOptions = 'look' | 'interact' | 'pickup' | 'talk' | 'sit';
+export type ActionOptionsWithState = `${'name' | ActionOptions}${
+  | '.'
+  | '#'}${string}`;
+export type RoomObjectKey =
+  | 'name'
+  | 'aka'
+  | 'icon'
+  | ActionOptionsWithState
+  | ActionOptions;
+
+/** An interactive object in a room. */
 export type RoomObject = {
-  // If not set, the room object ID will be used
-  // name?: string;
+  // If name not set, the room object ID will be used
+  // The AKA field is used in text mode to match other things the player could type.
+  // Name does not have to be unique, but AKA does.
 
   // If string or string[] it will be treated as a quote
+
   // Could be action.state to apply only to a specific state.
-  // Could also be use#itemId to trigger an action when that item is used on
-  // this.
-  [index in 'name' | ActionOptionsWithState | ActionOptions]?: ActionType;
+
+  // Could also be interact#objectId to trigger an action when that item is used on
+  // this (technically could be any verb#objectId, but that''s not tested)
+
+  // Could also also be look#inventory to provide a special look action when in
+  // the player's inventory.
+
+  [index in RoomObjectKey]?: ActionType;
 };
 
+/** A list of objects in a room. */
 export interface RoomObjectList {
   [roomObjectId: string]: RoomObject;
 }
 
-// Data to set up a room.
+/** Data to set up a room. */
 export interface RoomInit {
+  // States applied initially.
   states: string[];
-  artwork: SvgSource;
-  styles: URL[];
-  protagonistScale: number;
+  // Object IDs to seed the object set with (stuff you can look and interact with to begin with)
+  objects: string[];
+  // The SVG to render this room. Ignored in text mode, obviously.
+  artwork?: SvgSource;
+  // CSS / SCSS files to load for this room.
+  styles?: URL[];
+  // The scale of the protagonist when she is at the bottom and then top of the accessible area
+  // ie the first number is when she's close, and the second is when she's far. Ignored in text mode.
+  protagonistScale?: [number, number];
 }
 
+/** What happens when the protagonist enters a room. */
 export interface RoomEntry {
-  coords: Coord;
+  // Where in the SVG is the player placed (graphical mode only, obviously).
+  coords?: Coord;
+  // What gets said in text mode.
+  text?: Quote;
+  // What gets said in graphic mode, or if the text is not set.
   quote?: Quote;
 }
 
 export interface Room {
   roomId: string;
+  // The default name will be used, but you can specify a name based on the state.
+  // like 'default.some_state'
+  name?: {[index: string | 'default']: string};
   init: RoomInit;
   states: StateList;
   // The SVG markup to draw this room.
   // artwork: string;
   // Text shown when the Protagonist enters the room.
+  // From should match either the room they just left - it can include states (default.alarm_off)
   enter: {
     [from: string | 'default']: RoomEntry;
   };
@@ -142,9 +226,10 @@ export interface RoomList {
 
 // Will probably add artwork and coords
 export interface Popup {
+  title: string;
   quote?: Quote;
   popupStyle: string;
-  text: string;
+  popupContent: string;
   quoteAfter?: Quote;
 }
 
@@ -189,25 +274,29 @@ export interface ConvoList {
   [convoId: string]: Convo;
 }
 
-export interface InventoryItem {
-  name?: string;
-  description?: Quote;
-  artwork: SvgSource;
+// export interface InventoryItem {
+//   name?: string;
+//   description?: Quote;
+//   artwork: SvgSource;
 
-  fallbackUse?: Quote;
-  use?: {
-    // Another Item ID, which if used with this item, triggers this action.
-    // This could be dropped on it, or it can be dropped on this.
-    // Also includes the unique id 'protagonist' which is what happens if this
-    // is
-    // dropped on the protagonist.
-    [itemId: string | 'protagonist' | 'this' | 'talk']: ActionType;
-  };
-}
+//   fallbackUse?: Quote;
+//   use?: {
+//     // Another Item ID, which if used with this item, triggers this action.
+//     // This could be dropped on it, or it can be dropped on this.
+//     // Also includes the unique id 'protagonist' which is what happens if this
+//     // is
+//     // dropped on the protagonist.
+//     [itemId: string | 'protagonist' | 'this' | 'talk']: ActionType;
+//   };
+// }
 
-export interface InventoryList {
-  [itemId: string]: InventoryItem;
-}
+// export interface InventoryList {
+//   [itemId: string]: InventoryItem;
+// }
+
+// export interface InventoryWithId extends InventoryItem {
+//   id: string;
+// }
 
 export interface CharacterStyle {
   artwork: SvgSource;
@@ -215,9 +304,13 @@ export interface CharacterStyle {
   // How fast this character's walk cycle should move, in pixels per second.
   speed?: number;
   animations?: string[];
+  scss?: string;
+
+  dialogImagePos?: Coord;
+  dialogImageScale?: number;
 }
 
 export interface Character {
   id: string;
-  styles: { [style: string]: CharacterStyle };
+  styles: {[style: string]: CharacterStyle};
 }

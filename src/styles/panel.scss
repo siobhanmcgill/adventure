@@ -1,0 +1,474 @@
+@use "./mixins" as m;
+
+.panel {
+    display: inline-block;
+    position: relative;
+    background: var(--color-bg-blue);
+    border: 1px solid rgba(0, 0, 0, 0.25);
+    color: black;
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+    font-weight: 400;
+    font-size: 1rem;
+    // min-height: 2rem;
+    position: relative;
+    margin: 1rem; // Required for the drop shadow.
+    box-shadow: 0px 0px 1rem rgba(0, 0, 0, 0.5);
+    max-width: 33rem;
+
+    // Panels will "pop" up.
+    transform: scale(0.75);
+    transform-origin: 50%;
+    opacity: 0;
+    transition: transform 200ms ease-in-out, opacity 200ms ease-in-out;
+
+    &.show {
+        transform: scale(1);
+        opacity: 1;
+    }
+
+    &.black {
+        background: var(--color-bg-black);
+    }
+
+    &.red {
+        background: var(--color-bg-red);
+    }
+
+    &.blue {
+        background: var(--color-bg-blue);
+    }
+
+    @include m.aeroBorder();
+
+    .panel-title {
+        padding: 0 0.5rem 0.25rem;
+
+        h1,
+        h5 {
+            font-size: 0.75rem;
+            color: black;
+            text-shadow: 0px 0px 4px rgba(255, 255, 255, 1);
+            font-weight: 400;
+            margin: 0;
+        }
+    }
+
+    .menu-bar {
+        padding: 0;
+        margin: 0;
+        display: flex;
+        flex-direction: row;
+        gap: 0;
+        border: 1px solid;
+        border-color: rgba(0, 0, 0, 0.5) rgba(0, 0, 0, 0.25) rgba(0, 0, 0, 0.25) rgba(0, 0, 0, 0.5);
+        border-radius: 4px 4px 0 0;
+
+        background: #F6FEFF;
+        background: linear-gradient(180deg, rgba(246, 254, 255, 1) 0%, rgba(233, 239, 247, 1) 30%, rgba(212, 217, 232, 1) 45%, rgba(227, 230, 241, 1) 100%);
+
+        .menu-button {
+            background: none;
+            border: none;
+            color: black;
+            text-shadow: none;
+            padding: 0.25rem 0.75rem 0.125rem;
+            font-size: 0.9rem;
+            border-radius: 0;
+
+            &:hover,
+            &.active {
+                background: rgba(0, 0, 0, 0.1);
+            }
+
+            &::after {
+                display: none;
+            }
+        }
+    }
+
+    .bottom-bar {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-around;
+        background: rgb(241, 236, 235);
+        border: 1px solid;
+        border-color: rgba(0, 0, 0, 0.5) rgba(0, 0, 0, 0.25) rgba(0, 0, 0, 0.25) rgba(0, 0, 0, 0.5);
+        border-radius: 0 0 4px 4px;
+        box-shadow: 0 0 4px rgba(255, 255, 255, 0.5) inset;
+        padding: 0.25rem 1rem;
+    }
+
+    // A vertical bar on the side of the panel
+    .toolbar {
+        background: #F6FEFF;
+        background: linear-gradient(180deg, rgb(217, 219, 223) 0%, rgb(233, 235, 240) 50%, rgb(206, 213, 223) 100%);
+        width: 2.5rem;
+        border: 1px solid;
+        border-width: 0 1px 1px 1px;
+        border-color: rgba(0, 0, 0, 0.5) rgba(0, 0, 0, 0.25) rgba(0, 0, 0, 0.25) rgba(0, 0, 0, 0.5);
+        box-shadow: 0 0 2px rgba(255, 255, 255, 1) inset;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        padding: 0.5rem 0;
+        position: relative;
+        z-index: 5;
+
+        .toolbar-button {
+            background: none;
+            border: none;
+            color: black;
+            text-shadow: none;
+            padding: 0;
+            font-size: 0.9rem;
+            border-radius: 0;
+            width: 2.5rem;
+            height: 2.5rem;
+
+            i {
+                font-size: 1.5rem;
+                line-height: 2.5rem;
+                color: rgba(0, 0, 0, 0.75);
+            }
+
+            &:hover,
+            &.active {
+                background: rgba(0, 0, 0, 0.1);
+                box-shadow: 0 0 4px rgba(0, 0, 0, 0.25) inset;
+            }
+
+            &::after {
+                display: none;
+            }
+        }
+    }
+
+    .panel-tabs {
+        display: flex;
+        flex-direction: row;
+        gap: 0.25rem;
+        padding: 0.25rem 0.25rem 0;
+        border: 1px solid;
+        border-color: rgba(0, 0, 0, 0.5) rgba(0, 0, 0, 0.25) rgba(227, 230, 241, 1) rgba(0, 0, 0, 0.5);
+        border-radius: 4px 4px 0 0;
+        position: relative;
+        z-index: 5;
+        margin-bottom: -1px;
+        overflow: hidden;
+
+        background: #F6FEFF;
+        background: linear-gradient(180deg, rgba(246, 254, 255, 1) 0%, rgba(232, 236, 247, 1) 50%, rgba(205, 212, 231, 1) 55%, rgba(232, 235, 250, 1) 100%);
+
+        &:after {
+            content: "";
+            display: block;
+            width: 100%;
+            height: 1px;
+            position: absolute;
+            z-index: 1;
+            bottom: 0;
+            left: 0;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.5);
+        }
+
+        .tab {
+            padding: 0.5rem 1rem;
+            border: 1px solid;
+            border-color: rgba(0, 0, 0, 0.25) rgba(0, 0, 0, 0.125) rgba(0, 0, 0, 0.125) rgba(0, 0, 0, 0.25);
+            border-radius: 8px 8px 0 0;
+            border-bottom-width: 0px;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0) 80%, rgba(255, 255, 255, 1) 100%);
+            cursor: pointer;
+            box-shadow: 0px 0px 0px rgba(0, 0, 0, 0.5);
+            transition: border-color 200ms, box-shadow 200ms;
+            position: relative;
+
+            &.active {
+                border-bottom-width: 1px;
+                padding-bottom: 1px;
+                margin-bottom: -1px;
+                border-color: rgba(0, 0, 0, 0.5) rgba(0, 0, 0, 0.25) white rgba(0, 0, 0, 0.5);
+                z-index: 5;
+                box-shadow: 0px 0px 2px rgba(0, 0, 0, 0.5);
+                background: linear-gradient(180deg, rgb(251, 255, 255) 0%, rgb(239, 249, 250) 25%, rgb(208, 231, 247) 35%, rgb(187, 211, 255) 95%, white 100%);
+            }
+        }
+    }
+
+    .panel-body-wrapper {
+        display: flex;
+        flex-direction: row;
+        gap: 0;
+        height: 100%;
+        overflow: hidden;
+        position: relative;
+
+        .side-pane {
+            width: 20%;
+            overflow: hidden;
+            border-radius: 2px 0 0 2px;
+            border-right: 6px solid transparent;
+            transition: margin 200ms;
+            position: relative;
+            z-index: 1;
+
+            @include m.aeroBorder();
+
+            &.hidden {
+                margin-left: calc(-20% + 2px);
+            }
+
+            .side-pane-contents {
+                background: white;
+                box-sizing: border-box;
+                padding: 1rem;
+                height: 100%;
+                overflow: auto;
+                // box-shadow: 0 0 4px rgba(0, 0, 0, 0.75) inset;
+
+                h4 {
+                    margin-top: 0;
+                }
+            }
+        }
+
+        .panel-contents-wrapper {
+            flex-grow: 1;
+            border-radius: 0 2px 2px 0;
+            border-width: 1px 1px 1px 0;
+            // box-shadow: 0 0 4px rgba(0, 0, 0, 0.75) inset;
+        }
+    }
+
+    .panel-contents-wrapper {
+        padding: 1rem;
+        background: white;
+        border: 1px solid;
+        border-color: rgba(0, 0, 0, 0.5) rgba(0, 0, 0, 0.25) rgba(0, 0, 0, 0.25) rgba(0, 0, 0, 0.5);
+        border-radius: 2px;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        justify-content: flex-start;
+        gap: 1.5rem;
+        width: 100%;
+        box-sizing: border-box;
+
+        .quote-artwork {
+            width: 100px;
+            height: 100px;
+            min-width: 100px;
+        }
+
+        .panel-icon {
+            width: 2.5rem;
+            height: 2.5rem;
+            min-width: 2.5rem;
+        }
+
+        .panel-contents {
+            flex-grow: 1;
+        }
+    }
+
+    .tab-content {
+        display: none;
+
+        &.active {
+            display: block;
+        }
+
+        h4 {
+            margin: 0;
+        }
+
+        &.room-list,
+        &.inventory-list,
+        &.network-list {
+            width: 210px;
+            max-height: 550px;
+        }
+    }
+
+    .panel-actions {
+        display: flex;
+        align-items: flex-end;
+        gap: 0.75rem;
+        width: calc(100% + 0.5rem);
+        justify-content: flex-end;
+        margin: 1rem -1rem -1rem;
+        padding: 0.75rem;
+        background-color: #f0f0f0;
+        border-top: 1px solid #dfdfdf;
+
+        .panel-actions-border {
+            display: flex;
+            width: auto;
+            padding: 0;
+            border-radius: 0.25rem 0.25rem 0 0;
+            border: 1px solid;
+            border-bottom-width: 0;
+            border-color: rgba(255, 255, 255, 0.25) rgba(255, 255, 255, 0.5) rgba(255, 255, 255, 0.05) rgba(255, 255, 255, 0.25);
+        }
+
+        button {
+            color: black;
+            text-shadow: none;
+            font-size: 0.9rem;
+            margin: 0;
+            border-radius: 0.25rem;
+            padding: 0.125rem 2rem;
+            background: linear-gradient(180deg,
+                    rgb(242, 242, 242) 0%,
+                    rgb(235, 235, 235) 49%,
+                    rgb(221, 221, 221) 50%,
+                    rgb(207, 207, 207) 100%);
+
+            &:focus {
+                border-color: rgba(0, 0, 0, 0.4) rgba(0, 0, 0, 0.7) rgba(0, 0, 0, 0.7) rgba(0, 0, 0, 0.5);
+                box-shadow: 0 0 5px rgb(45, 183, 255) inset;
+                background: linear-gradient(180deg,
+                        rgb(234, 246, 253) 0%,
+                        rgb(228, 244, 253) 49%,
+                        rgb(201, 234, 252) 50%,
+                        rgb(180, 223, 247) 100%);
+                outline: none;
+            }
+
+            &:active {
+                box-shadow: 0 0 5px rgb(45, 183, 255) inset, 0 0 0.5rem rgba(0, 0, 0, 0.5) inset;
+            }
+
+        }
+    }
+}
+
+.close-panel {
+    position: absolute;
+    top: 0;
+    right: 0.5rem;
+    border-radius: 0 0 6px 6px;
+    padding: 0 1rem;
+}
+
+.input {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+    transition: background-color 2s;
+
+    .panel-contents {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+
+    svg {
+        margin: 0 auto;
+        max-height: 300px;
+    }
+
+    p {
+        margin: 0;
+    }
+
+    input {
+        display: block;
+        padding: 5px 10px;
+    }
+
+    button {
+        align-self: flex-end;
+        padding: 4px 10px 0;
+    }
+
+    &.remove-me {
+        background-color: rgba(0, 0, 0, 0);
+
+        .panel {
+            position: relative;
+            animation: runaway 1.5s both ease-out, runawaymotion 1.5s both ease-in;
+        }
+    }
+}
+
+.quote {
+    width: 31rem;
+
+    .panel-contents {
+        flex-grow: 1;
+
+        .name {
+            font-weight: 700;
+            font-style: italic;
+            margin-bottom: 0.5rem;
+        }
+
+        &.narrator {
+            font-size: 1.1rem;
+            font-style: italic;
+        }
+
+        .quote-text {
+            margin-bottom: 1.5rem;
+        }
+    }
+
+    p {
+        margin: 0;
+    }
+
+    .click-hint {
+        position: absolute;
+        bottom: 0;
+        right: 5px;
+        font-style: italic;
+        opacity: 0;
+
+        animation: clickHint 1s 7s infinite;
+    }
+}
+
+@keyframes clickHint {
+
+    0%,
+    50% {
+        opacity: 0.5;
+    }
+
+    51%,
+    100% {
+        opacity: 0;
+    }
+}
+
+.overlays {
+    transition: background 250ms;
+
+    &.shade {
+        width: 100vw;
+        height: 100vh;
+        background: rgba(0,0,0,0.25);
+    }
+
+    .panel {
+        position: absolute;
+        left: -9999rem;
+
+        &.center {
+            left: 50vw;
+            top: 50vh;
+
+            transform: translate(-50%, -30%) scale(0.75);
+
+            &.show {
+                transform: translate(-50%, -50%) scale(1);
+            }
+        }
+    }
+}

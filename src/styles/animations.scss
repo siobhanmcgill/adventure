@@ -1,0 +1,95 @@
+@use 'sass:list';
+@use 'sass:math';
+
+.animation-blink {
+  animation: blink 500ms forwards;
+  animation-iteration-count: 5;
+}
+
+@keyframes blink {
+    0% {
+        opacity: 1;
+    }
+
+    45% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0;
+    }
+
+    95% {
+        opacity: 0;
+    }
+}
+
+@keyframes eyeBlink {
+    48% {
+        transform: scaleY(1);
+    }
+
+    50% {
+        transform: scaleY(0.25);
+    }
+
+    51% {
+        transform: scaleY(0.25);
+    }
+
+    53% {
+        transform: scaleY(1);
+    }
+}
+
+@keyframes mouthTalk {
+
+    0%,
+    15%,
+    20%,
+    35%,
+    40%,
+    60%,
+    80%,
+    85% {
+        transform: scaleY(1);
+    }
+
+    5%,
+    10%,
+    25%,
+    30%,
+    50%,
+    70%,
+    75%,
+    90%,
+    100% {
+        transform: scaleY(0.25);
+    }
+}
+
+@keyframes runaway {
+    0% {
+        transform: scale(1) rotateZ(0);
+    }
+
+    100% {
+        transform: scale(0) rotateZ(720deg);
+    }
+}
+
+@keyframes runawaymotion {
+    $coords: 0 0, -12 -20, -26 -75, -9 -106, 22 -130, 64 -145, 88 -148, 118 -148, 155 -140, 186 -127, 208 -112;
+    $count: list.length($coords);
+    $each: math.div(100, $count - 1);
+    $percentage: 0;
+
+    @each $coord in $coords {
+        #{$percentage}% {
+            left: #{list.nth($coord, 1)}px;
+            top: #{list.nth($coord, 2)}px;
+        }
+
+        $percentage: $percentage + $each;
+    }
+}

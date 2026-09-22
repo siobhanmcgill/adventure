@@ -1,0 +1,188 @@
+/* STYLES FOR TEXT MODE */
+@use './mixins' as m;
+
+// Used in text-only mode.
+.screen .main-text-panel {
+  max-width: none;
+  width: calc(100vw - 2rem);
+  height: calc(100vh - 2rem);
+  max-width: 1024px;
+  max-height: 768px;
+  box-sizing: border-box;
+  display: inline-flex;
+  flex-direction: column;
+
+  .panel-contents-wrapper {
+    // height: calc(100% - 1.5rem);
+    overflow-y: scroll;
+    flex-direction: column;
+    display: block;
+    flex-grow: 1;
+    border-top: 0px;
+
+    .panel-contents {
+      flex-grow: initial;
+    }
+
+    .click-msg {
+      font-style: italic;
+      text-align: right;
+      font-size: 0.75rem;
+      opacity: 0;
+      height: 0;
+      overflow: hidden;
+      transition: opacity 150ms 0s;
+
+      body.waiting-for-click & {
+        opacity: 0.75;
+        transition: opacity 150ms 100ms;
+        height: auto;
+      }
+    }
+  }
+
+  .text-line {
+    margin-bottom: 1rem;
+
+    &.reveal {
+      height: 0;
+      overflow: hidden;
+      transition-property: height;
+
+      &.show {
+        height: calc-size(fit-content, size);
+      }
+    }
+
+    &.float-left {
+      float: left;
+      margin: 0 1rem 0 0;
+    }
+
+    &.fullscreen {
+      margin: 0;
+      height: 650px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    &.center {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .character {
+      padding: 0.5rem 1rem;
+      // Different characters will have their own colors.
+      // Blue is for player input, yellow is for the protagonist, 
+      // and green is the default for other folks.
+      background: var(--color-bg-blue);
+      border-radius: 0.5rem;
+      display: inline-block;
+      @include m.aeroBorder();
+      box-shadow: 0px 0px 4px rgba(0, 0, 0, 0.25);
+
+      .name {
+        font-size: 0.75rem;
+        font-style: italic;
+      }
+
+      &.character-p {
+        background: var(--color-bg-yellow);
+      }
+    }
+
+    .room-object {
+      text-decoration: underline;
+      cursor: pointer;
+    }
+  }
+
+  .inline-image {
+    max-height: 150px;
+    opacity: 1;
+    transition: opacity 200ms;
+
+    @starting-style {
+      opacity: 0;
+    }
+  }
+
+  .end-of-line {
+    height: 1rem;
+  }
+
+  .prompt-line {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    opacity: 0;
+    transition: opacity 150ms;
+    height: 0;
+    overflow: hidden;
+    margin-bottom: 0;
+
+    &.show {
+      opacity: 1;
+      height: auto;
+    }
+  }
+
+  .text-prompt {
+    border: none;
+    outline: none;
+    font-size: 1.2rem;
+    width: 100%;
+  }
+
+  .text-menu {
+    display: inline-flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 2rem;
+
+    .option {
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      border: 1px solid var(--color-bg-blue);
+      min-width: 150px;
+      cursor: pointer;
+      transition: all 150ms;
+
+      &.active {
+        background: var(--color-bg-blue);
+        @include m.aeroBorder();
+      }
+    }
+  }
+
+  .chapter-heading {
+    font-size: 1.5rem;
+  }
+}
+
+.object-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+
+  .object-list-item {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+
+    i {
+      font-size: 1.5rem;
+    }
+
+    p {
+      text-align: center;
+      text-transform: capitalize;
+    }
+  }
+}

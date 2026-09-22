@@ -1,21 +1,10 @@
-import { map } from 'rxjs/operators';
+import {firstValueFrom, Observable, Subject, withLatestFrom} from 'rxjs';
+import {AnyGameMode} from '.';
+import {ObjectHandler} from './objectHandler';
+import {getStorage, setStorage} from './utils/utils';
+import {RoomObject} from './types';
 
-import { FALLBACK_USE_ITEM_WITH, FALLBACTIONS } from './constants';
-import { inventory } from './content/inventory';
-import { doAction } from './objectHandler';
-import { RoomHandler } from './roomHandler';
-import { GameState } from './state';
-import {
-  extractIdFromSvg,
-  getSvg,
-  loadSvgString,
-  printDialog,
-} from './svg_utils';
-import { Character, InventoryItem, RoomObject } from './types';
-
-export interface InventoryWithId extends InventoryItem {
-  id: string;
-}
+export const STORAGE_INVENTORY = 'agency_inventory';
 
 export class InventoryHandler {
   private readonly inventoryListElement = document.querySelector(
@@ -27,124 +16,118 @@ export class InventoryHandler {
 
   private readonly loadedArtwork = new Map<URL, string>();
 
-  constructor(
-    private readonly state: GameState,
-    private readonly roomHandler: RoomHandler
-  ) {
-    this.inventoryToggle.addEventListener('click', () => {
-      this.inventory.classList.toggle('open');
-    });
+  private readonly inventoryObjects = new Map<string, ObjectHandler>();
 
-    this.state.inventory$
-      .pipe(
-        map((ids) =>
-          [...ids]
-            .filter((id) => !!inventory[id])
-            .map((id) => ({ ...inventory[id], id } as InventoryWithId))
-        )
-      )
-      .subscribe(async (inventory) => {
-        console.log('active inventory', inventory);
-        this.inventoryListElement.innerHTML = '';
+  private readonly inventoryUpdatedSource = new Subject<boolean>();
+  readonly inventoryUpdated$: Observable<boolean> = this.inventoryUpdatedSource;
 
-        if (inventory.length) {
-          this.inventory.classList.add('has-inventory');
-        } else {
-          this.inventory.classList.remove('has-inventory');
-        }
+  private readonly objectLookupMap = new Map<string, string>();
 
-        for (const item of inventory) {
-          if (!this.loadedArtwork.has(item.artwork.url)) {
-            const svgString = await loadSvgString(item.artwork.url);
-            this.loadedArtwork.set(item.artwork.url, svgString);
-          }
-          const svgString = this.loadedArtwork.get(item.artwork.url)!;
-          const thisItemSvg = extractIdFromSvg(
-            `<svg>${svgString}</svg>`,
-            item.artwork.layerId
-          );
-
-          const itemElement = document.createElement('div');
-          itemElement.classList.add('item');
-          itemElement.innerHTML = `
-          <svg viewBox="${item.artwork.viewBox}">${thisItemSvg}</svg>
-          <span class="item-name">${item.name ?? item.id}</span>
-          `;
-          this.inventoryListElement.appendChild(itemElement);
-
-          itemElement.addEventListener('click', (event) => {
-            const grabbedItem = this.state.getGrabbedItem();
-            console.log('grabbed item', grabbedItem);
-            if (grabbedItem?.id === item.id) {
-              // Put this item down.
-              itemElement.classList.remove('grabbed');
-              this.state.dropItem();
-            } else if (grabbedItem) {
-              // Try to use the grabbed item on this item.
-              useItemsTogether(
-                grabbedItem,
-                item.id,
-                item,
-                this.state,
-                this.roomHandler
-              );
-            } else {
-              switch (this.state.getActiveAction()) {
-                case 'interact':
-                  if (item.use?.this) {
-                    doAction(item.use?.this, this.state, this.roomHandler);
-                    break;
-                  }
-                case 'pickup':
-                  itemElement.classList.add('grabbed');
-                  this.state.grabItem(item);
-                  break;
-                case 'look':
-                  printDialog(
-                    item.description ?? `It's a ${item.name ?? item.id}`,
-                    this.state
-                  );
-                  break;
-                case 'talk':
-                  doAction(
-                    item.use?.talk ?? FALLBACTIONS.interact,
-                    this.state,
-                    this.roomHandler
-                  );
-                  break;
-              }
-            }
-
-            event.stopPropagation();
-            event.stopImmediatePropagation();
-          });
-        }
-      });
-  }
-}
-
-export function useItemsTogether(
-  grabbedItem: InventoryWithId,
-  targetId: string,
-  targetItem: InventoryWithId | RoomObject | Character | 'protagonist',
-  state: GameState,
-  roomHandler: RoomHandler
-) {
-  const action =
-    (grabbedItem.use ?? {})[targetId] ??
-    ((targetItem as InventoryWithId).use ?? {})[grabbedItem.id] ??
-    ((targetItem as RoomObject) ?? {})[`interact#${grabbedItem.id}`];
-  if (action) {
-    doAction(action, state, roomHandler);
-    state.dropItem();
-    document.querySelectorAll('.inventory .item').forEach(item => {
-      item.classList.remove('grabbed');
-    });
-  } else {
-    doAction(
-      grabbedItem.fallbackUse ?? FALLBACK_USE_ITEM_WITH,
-      state,
-      roomHandler
+  constructor(private readonly game: AnyGameMode) {
+    const savedInventory = getStorage<{[index: string]: RoomObject}>(
+      STORAGE_INVENTORY,
+      {}
     );
+    if (Object.keys(savedInventory).length) {
+      const ids: string[] = [];
+      for (const [id, data] of Object.entries(savedInventory)) {
+        this.inventoryObjects.set(id, new ObjectHandler(id, this.game, data));
+        ids.push(id);
+      }
+      this.populateLoookupMap();
+      this.populateInventoryUi();
+
+      this.game.state.addToInventory(ids);
+    }
+
+    this.game.state.inventory$.subscribe(async (inventoryIds) => {
+      this.updateInventoryList(inventoryIds);
+    });
+
+    this.inventoryUpdatedSource.subscribe(() => {
+      this.populateInventoryUi();
+
+      const extractedData: {[index: string]: RoomObject} = {};
+      for (const [id, object] of this.inventoryObjects.entries()) {
+        extractedData[id] = object.getData();
+      }
+      setStorage<{[index: string]: RoomObject}>(
+        STORAGE_INVENTORY,
+        extractedData
+      );
+    });
+
+    this.game.state.room$.subscribe((room) => {
+      // When a room is loaded, sync the inventory objects in case there are updates.
+      for (const id of this.inventoryObjects.keys()) {
+        if (room.objects[id]) {
+          this.inventoryObjects.set(
+            id,
+            new ObjectHandler(id, this.game, room.objects[id])
+          );
+        }
+      }
+      this.inventoryUpdatedSource.next(true);
+    });
+  }
+
+  getInventory(): readonly ObjectHandler[] {
+    return [...this.inventoryObjects.values()];
+  }
+
+  /**
+   * Returns an object whose name is contained in a string,
+   * as well as the string with the matching name removed.
+   */
+  lookUpObject(text: string): [ObjectHandler, string] | undefined {
+    // Sort by name length so the more specific match will be found first.
+    const match = [...this.objectLookupMap.entries()]
+      .sort((a, b) => a[0].length - b[0].length)
+      .find(([name]) => text.match(new RegExp(`\\b${name}\\b`, 'gi')));
+    if (!match || !this.inventoryObjects.has(match[1])) {
+      return undefined;
+    }
+    return [this.inventoryObjects.get(match[1])!, text.replace(match[0], '')];
+  }
+
+  private async updateInventoryList(inventoryIds: Set<string>) {
+    const newIds = [...inventoryIds.values()].filter(
+      (id) => !this.inventoryObjects.has(id)
+    );
+    const removeIds = [...this.inventoryObjects.keys()].filter(
+      (id) => !inventoryIds.has(id)
+    );
+
+    const roomData = await firstValueFrom(this.game.state.room$);
+    for (const objectId of newIds) {
+      if (roomData.objects[objectId]) {
+        this.inventoryObjects.set(
+          objectId,
+          new ObjectHandler(objectId, this.game, roomData.objects[objectId])
+        );
+      }
+    }
+    for (const objectId of removeIds) {
+      this.inventoryObjects.delete(objectId);
+    }
+
+    this.populateLoookupMap();
+
+    this.inventoryUpdatedSource.next(true);
+  }
+
+  private populateLoookupMap() {
+    // Create the map of object names to IDs.
+    this.objectLookupMap.clear();
+    for (const [key, object] of this.inventoryObjects) {
+      const names: string[] = object.getLookupNames().filter(Boolean);
+      for (const name of names) {
+        this.objectLookupMap.set(name.toLowerCase(), key);
+      }
+    }
+  }
+
+  private populateInventoryUi() {
+    // TODO: put the inventory items in the UI
   }
 }

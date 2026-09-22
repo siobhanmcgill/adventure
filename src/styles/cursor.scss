@@ -1,0 +1,86 @@
+body {
+    &.actions-available {
+        .action-buttons {
+            opacity: 1;
+
+            button {
+                cursor: pointer;
+            }
+        }
+    }
+
+    &.active-action-look {
+        .screen {
+
+            .item,
+            .room-object,
+            .character {
+                cursor: url("../assets/icons/look.png") 15 15, pointer !important;
+            }
+        }
+
+        .screen .character.protagonist {
+            cursor: default !important;
+        }
+    }
+
+    &.active-action-interact {
+        .screen {
+
+            .item,
+            .room-object,
+            .character {
+                cursor: url("../assets/icons/interact.png") 12 4, pointer !important;
+            }
+        }
+
+        .screen .character.protagonist {
+            cursor: default !important;
+        }
+    }
+
+    &.active-action-pickup {
+        .screen {
+
+            .item,
+            .room-object,
+            .character {
+                cursor: url("../assets/icons/pickup.png") 12 8, pointer !important;
+            }
+        }
+
+        .screen .character.protagonist {
+            cursor: default !important;
+        }
+    }
+
+    &.active-action-talk {
+        .screen {
+
+            .item,
+            .room-object,
+            .character {
+                cursor: url("../assets/icons/talk.png") 8 23, pointer !important;
+            }
+        }
+
+        .screen .character.protagonist {
+            cursor: default !important;
+        }
+    }
+
+    &.grabbing {
+        cursor: url("../assets/icons/hold.png") 8 10, grabbing !important;
+
+        .screen {
+
+            .inventory .toggle,
+            .item,
+            .room-object,
+            .character,
+            .character.protagonist {
+                cursor: url("../assets/icons/drop.png") 8 7, grabbing !important;
+            }
+        }
+    }
+}

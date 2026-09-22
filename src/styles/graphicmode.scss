@@ -1,0 +1,82 @@
+/* STYLES FOR GRAPHIC MODE */
+@use './mixins' as m;
+
+// Used in graphic mode.
+.main-game-svg {
+  width: 100%;
+  max-height: 100%;
+  aspect-ratio: 1.33;
+  background-size: 100% 100%;
+  border-radius: 1rem;
+  box-shadow: 0 0 2rem rgba(0, 0, 0, 1);
+  background: none;
+
+  &.bg {
+    background: linear-gradient(to top right, #d9cc0f, #25a2ca, #0c697a);
+  }
+
+  .path-target-line {
+    fill: none;
+    stroke: none;
+  }
+
+  #{m.svgLabel("blink")} {
+    animation: blink 300ms infinite;
+  }
+
+  .room {
+    #{m.svgLabel("accessible-area")} {
+      stroke: transparent !important;
+      // No fill is necessary so the floor underneath is clickable.
+      fill: none !important;
+    }
+
+    .protagonist-position {
+      fill: transparent;
+    }
+  }
+
+  .character {
+    cursor: pointer;
+
+    &.protagonist {
+      cursor: default;
+    }
+
+    #{m.svgLabel("eyes")} {
+      transform-box: fill-box;
+      transform-origin: 50%;
+      animation: eyeBlink 5s infinite;
+    }
+  }
+
+  g.room-object {
+    cursor: pointer;
+
+    &:hover {
+      #{m.svgLabel("hover")} {
+        stroke-width: 3px;
+        stroke: black;
+      }
+    }
+  }
+
+  .tooltip-container {
+    display: none;
+
+    &.show {
+      display: block;
+    }
+  }
+
+  .tooltip {
+    display: inline-block;
+    margin-left: 250px;
+    transform: translateX(-50%);
+    background: var(--color-bg-black);
+    padding: 3px 5px;
+    border-radius: 3px;
+    font-size: 1rem;
+    color: white;
+  }
+}

@@ -1,0 +1,43 @@
+.crash {
+  .playfield {
+    display: flex;
+    flex-direction: row;
+    gap: 1rem;
+  }
+
+  .player {
+    border: 1px solid black;
+    border-radius: 1rem;
+    padding: 1rem;
+    flex-grow: 1;
+    min-width: 150px;
+
+    h5 {
+      font-size: 1rem;
+      margin: 0;
+    }
+
+    .values {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: 1fr 1fr 1fr;
+      justify-content: center;
+      align-items: center;
+      gap: 0.5rem;
+
+      .die {
+        width:4rem;
+        height: 4rem;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 2rem;
+        background-color: grey;
+        border-radius: 5px;
+        color: white;
+        box-shadow: -2px -2px 4px rgba(0, 0, 0, 0.75) inset, 2px 2px 4px rgba(255, 255, 255, 0.75) inset;
+        text-shadow: 1px 1px 2px rgba(255,255,255, 0.5), -1px -1px 2px rgba(0,0,0,0.5);
+      }
+    }
+  }
+}
