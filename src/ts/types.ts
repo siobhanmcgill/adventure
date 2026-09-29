@@ -6,17 +6,6 @@ export type Coord = {x: number; y: number};
 // TODO: Rename this to "snippet" or "text?"
 export type Quote = string | string[];
 
-export interface Conditional {
-  // Include this option if the player took this convo path.
-  ifPath?: string;
-  // Include this option if the state includes this.
-  ifState?: string;
-  // Include this option if the player has this tag applied.
-  ifTag?: string;
-  // Include this option is this state is not applied.
-  ifNotState?: string;
-}
-
 /**
  * Quote format:
  *
@@ -217,7 +206,6 @@ export interface Room {
 
   objects: RoomObjectList;
   popups?: PopupList;
-  convos?: ConvoList;
 }
 
 export interface RoomList {
@@ -238,40 +226,88 @@ export interface PopupList {
 }
 
 /**
- * When I call 'goto'
- * First it checks for the 'goto' path with every path leading to it.
- * So I can specify a different convo if the player took different steps.
+ * Canonical conversation flags
+ * These can be used in the condition of a response option
+ * These can be appended to a convo step
  *
- * If it has an action and a goto, do the action first.
+ * ##convo-tag
+ * #player-tag
+ * >previous-step - this can also be prepended to a step (previous-step>this-step)
+ * +inventory-item-id
+ * .room-state
+ * $quest-id  (visible if this quest is active)
+ * $quest-id:quest-phase  (visible if that phase of that quest is active)
  */
-export interface ConvoResponseOption extends Conditional {
+
+type ConvoFlagDelimiter = '##' | '#' | '>' | '+' | '.' | '$';
+
+type ConvoFlagKey<K extends string> =
+  | `${K}${ConvoFlagDelimiter}${string}`
+  // For a quest phase (somestep$quest:phase2)
+  | `${K}$${string}:${string}`
+  // For a previous conversation step.
+  | `${string}>${K}`;
+
+/**
+ * Response options
+ * if “mention-friend” - the option will open a list of friends for the player to choose from
+ * Potentially other “smart” options? Offer item?
+ *
+ * Otherwise, options can be shown or hidden based on
+ * convo tag
+ * player tag
+ * convo flow (what steps have been seen so far)
+ * room state
+ * active quests
+ * known friends
+ */
+export interface ConvoResponseOption {
+  // A conversation flag to determine if this option is available
+  condition?: ConvoFlagKey<''>;
   text: string;
+  // Optionally trigger some sort of more granular action.
   action?: Action;
   // goto: 'something' continues the convo at the something path
-  goto: string;
-  // goto.state: 'somethingelse' continues the convo at somethingelse
-  // if state is active.
-  [goto: `goto${'.' | '#' | '>'}${string}`]: string;
-}
-
-export interface ConvoQuoteParams extends Conditional {
-  quote?: Quote;
   goto?: string;
-  responses?: ConvoResponseOption[];
+  // Include a conversation flag to trigger a goto under different circumstances
+  [gotoWithFlag: ConvoFlagKey<'goto'>]: string;
 }
 
-// Only the final item in the array will be checked for goto and responses.
-export type ConvoQuote = Array<string | ConvoQuoteParams>;
+export interface ConvoStep {
+  text?: Quote;
+  responses?: ConvoResponseOption[];
+  goto?: string;
+}
 
 export interface Convo {
-  // 'default' is the entry point when initiating the dialog.
-  // 'default.state' will be the entry point when that state is active.
-  // 'something>somethingelse' will happen if something was met before somethingelse
-  [path: string]: ConvoQuote;
-}
-
-export interface ConvoList {
-  [convoId: string]: Convo;
+  /**
+   * Step name can be:
+   * 'default' is the entry point
+   * Any conversation flag can be added to the step name.
+   *
+   * If a step has “core” in the name, it’s a core sort of “holding pattern”
+   *
+   * Core steps always add “mention friend”, “show item”, and “play crash” options,
+   * even if there are no other responses. Then all characters should have a “crash”
+   * convo step that covers the “Play crash” option
+   *
+   * “crash_win” covers if the character beats you at crash
+   * “crash_lose” covers if the character loses to you at crash
+   * “mention:character_id” to mention a character
+   * “item+object_id” to cover showing items to them.
+   * “item+default” is the fallback if an object has no effect.
+   * “characterId+crash_dice” is always an alias for “characterId_crash”
+   *
+   * So a convo has to have at minimum:
+   * %core%
+   * crash
+   * crash_win
+   * crash_lose
+   * item+default
+   * mention:default
+   *
+   */
+  [stepName: string | ConvoFlagKey<string>]: ConvoStep;
 }
 
 // export interface InventoryItem {
