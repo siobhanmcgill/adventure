@@ -1,6 +1,44 @@
-// In case stringify doesn't work:
 // import {stringify} from 'circ-json';
-import {Convo, ConvoResponseOption, ConvoStep, FLAG_DELIMITERS} from '../../src/ts/types';
+// import {Convo, ConvoResponseOption, ConvoStep, FLAG_DELIMITERS} from '../../src/ts/types';
+
+// TODO: figure out how to include these as types without compiling everything
+const FLAG_DELIMITERS = ['##', '#', '>', '@', '.', '$'];
+type Quote = string | string[];
+
+type ConvoFlagDelimiter = typeof FLAG_DELIMITERS[number];
+
+type ConvoFlagKey<K extends string> =
+  | `${K}${ConvoFlagDelimiter}${string}`
+  // For a quest phase (somestep$quest:phase2)
+  | `${K}$${string}:${string}`
+  // For a previous conversation step.
+  | `${string}>${K}`;
+
+interface ConvoResponseOption {
+  // A conversation flag to determine if this option is available
+  condition?: ConvoFlagKey<''>;
+  text: string;
+  // Optionally trigger some sort of more granular action.
+  action?: Action;
+  // goto: 'something' continues the convo at the something path
+  goto?: string;
+  // Include a conversation flag to trigger a goto under different circumstances
+  // FIXME: This may or may not work or be useful
+  [gotoWithFlag: ConvoFlagKey<'goto'>]: string;
+}
+
+interface ConvoStep {
+  text?: Quote;
+  responses?: ConvoResponseOption[];
+  goto?: string;
+  queue?: Quote[];
+  onQueueFinishGoto?: string;
+  action?: Action;
+}
+
+interface Convo {
+  [stepName: string | ConvoFlagKey<string>]: ConvoStep;
+}
 
 const ui = {
   log: (
@@ -292,7 +330,7 @@ if (selection.length !== 1) {
     traverse(elem, convo);
     // console.log(convo);
     // const stringified = stringify(convo, 2);
-    const stringified = JSON.stringify(convo);
+    const stringified = JSON.stringify(convo, null, ' ');
     // console.log(stringified);
 
     (async () => {

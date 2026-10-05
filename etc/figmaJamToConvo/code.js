@@ -1,9 +1,19 @@
-import { FLAG_DELIMITERS } from '../../src/ts/types';
+"use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+const FLAG_DELIMITERS = ['##', '#', '>', '@', '.', '$'];
 const ui = {
     log: (message, options = { timeout: 2000 }) => {
         let n;
         const prom = new Promise((res) => {
-            n = figma.notify(message, { ...options, onDequeue: res });
+            n = figma.notify(message, Object.assign(Object.assign({}, options), { onDequeue: res }));
         });
         prom.cancel = () => {
             n.cancel();
@@ -13,7 +23,7 @@ const ui = {
     error: (message, options = { timeout: 2000 }) => {
         let n;
         const prom = new Promise((res) => {
-            n = figma.notify(message, { ...options, error: true, onDequeue: res });
+            n = figma.notify(message, Object.assign(Object.assign({}, options), { error: true, onDequeue: res }));
         });
         prom.cancel = () => {
             n.cancel();
@@ -62,14 +72,14 @@ const RESPONSE_IGNORE_LIST = ['[ITEM]', '[FRIEND]', '[CRASH]'];
 const knownNodes = new Map();
 const knownEdges = [];
 function cleanTextLine(text) {
-    return (text ?? '')
+    return (text !== null && text !== void 0 ? text : '')
         .trim()
         .replace(/,$/, '')
         .replace(/^("|“|”|`|'|‘)/, '')
         .replace(/("|“|”|`|'|’)$/, '');
 }
 function processTextToLines(text) {
-    return ((text ?? '')
+    return ((text !== null && text !== void 0 ? text : '')
         .split(/\r?\n|\r|\n/g)
         .map((l) => cleanTextLine(l))
         .filter((l) => !!l.trim()));
@@ -79,7 +89,7 @@ function processNodeText(node) {
     const re = /queue:\n?\[((.*\n|.)*)\]/g;
     const match = re.exec(nodeText);
     let queue = [];
-    if (match?.length) {
+    if (match === null || match === void 0 ? void 0 : match.length) {
         queue = processTextToLines(match[1]);
         nodeText = nodeText.replace(re, '');
     }
@@ -93,6 +103,7 @@ function getProperStepNameFromNodeName(otherNodeName) {
     return otherNodeName.split(/[\\#|\\@|\\.|\\$]/)[0];
 }
 function traverse(node, convo) {
+    var _a, _b, _c, _d;
     if (knownNodes.has(node.id)) {
         return knownNodes.get(node.id);
     }
@@ -103,8 +114,8 @@ function traverse(node, convo) {
         const { textLines, queue } = processNodeText(node);
         const firstLine = textLines.shift();
         if (!firstLine ||
-            firstLine?.startsWith('`') ||
-            firstLine?.startsWith(':')) {
+            (firstLine === null || firstLine === void 0 ? void 0 : firstLine.startsWith('`')) ||
+            (firstLine === null || firstLine === void 0 ? void 0 : firstLine.startsWith(':'))) {
             if (firstLine) {
                 textLines.unshift(firstLine);
             }
@@ -113,14 +124,14 @@ function traverse(node, convo) {
             stepName = firstLine.replace(' ', '');
         }
         const lastLine = textLines.pop();
-        if (lastLine?.trim().startsWith('goto')) {
+        if (lastLine === null || lastLine === void 0 ? void 0 : lastLine.trim().startsWith('goto')) {
             convoStep.goto = lastLine.replace('goto:', '').trim();
             hasGoto = true;
         }
         else if (lastLine && lastLine.trim() !== 'end') {
             textLines.push(lastLine);
         }
-        if (queue?.length) {
+        if (queue === null || queue === void 0 ? void 0 : queue.length) {
             const queueFinishGotoLine = textLines.findIndex((l) => l.startsWith('onQueueFinishGoto'));
             if (queueFinishGotoLine > -1) {
                 const onQueueFinishGoto = cleanTextLine(textLines[queueFinishGotoLine].replace('onQueueFinishGoto:', ''));
@@ -129,7 +140,7 @@ function traverse(node, convo) {
             }
             convoStep.queue = queue;
         }
-        if (textLines?.length) {
+        if (textLines === null || textLines === void 0 ? void 0 : textLines.length) {
             convoStep.text = textLines;
         }
         convo[stepName] = convoStep;
@@ -143,12 +154,11 @@ function traverse(node, convo) {
         }
         const { directional, dir } = computeDirectionOfEdge(connector);
         if (directional === 'BI' ||
-            connector.connectorEnd
-                ?.endpointNodeId === node.id) {
+            ((_a = connector.connectorEnd) === null || _a === void 0 ? void 0 : _a.endpointNodeId) === node.id) {
             continue;
         }
         const to = dir.to;
-        const otherEndpointNodeId = connector[to]?.endpointNodeId;
+        const otherEndpointNodeId = (_b = connector[to]) === null || _b === void 0 ? void 0 : _b.endpointNodeId;
         if (otherEndpointNodeId) {
             const otherNode = getNodeFromId(otherEndpointNodeId);
             if (otherNode &&
@@ -164,7 +174,7 @@ function traverse(node, convo) {
                     if (!RESPONSE_IGNORE_LIST.includes(textLines[0])) {
                         let condition = undefined;
                         if ([...FLAG_DELIMITERS, '!'].includes(textLines[0].charAt(0))) {
-                            condition = textLines.shift() ?? undefined;
+                            condition = (_c = textLines.shift()) !== null && _c !== void 0 ? _c : undefined;
                         }
                         let goto = undefined;
                         if (textLines[textLines.length - 1].startsWith('goto')) {
@@ -195,32 +205,32 @@ function traverse(node, convo) {
         knownEdges.push(connector.id);
     }
     return node.shapeType === RESPONSE_SHAPE
-        ? connectedStepNames[0] ?? ''
+        ? (_d = connectedStepNames[0]) !== null && _d !== void 0 ? _d : ''
         : stepName;
 }
 const selection = figma.currentPage.selection;
 if (selection.length !== 1) {
-    (async () => {
-        await ui.error('Please select a single node as root');
+    (() => __awaiter(void 0, void 0, void 0, function* () {
+        yield ui.error('Please select a single node as root');
         figma.closePlugin();
-    })();
+    }))();
 }
 else {
     const elem = selection[0];
     if (elem.type !== 'SHAPE_WITH_TEXT') {
-        (async () => {
-            await ui.error('Please select a node (a box with text inside) in your flowchart as root');
+        (() => __awaiter(void 0, void 0, void 0, function* () {
+            yield ui.error('Please select a node (a box with text inside) in your flowchart as root');
             figma.closePlugin();
-        })();
+        }))();
     }
     else {
         const convo = {};
         traverse(elem, convo);
-        const stringified = JSON.stringify(convo);
-        (async () => {
+        const stringified = JSON.stringify(convo, null, ' ');
+        (() => __awaiter(void 0, void 0, void 0, function* () {
             figma.showUI(__html__, { themeColors: true, width: 500, height: 400 });
             figma.ui.postMessage(stringified);
-        })();
+        }))();
     }
 }
 //# sourceMappingURL=code.js.map

@@ -1,11 +1,29 @@
 {
   "extends": "../../tsconfig.json",
   "compilerOptions": {
+    "module": "es6",
+    "target": "es6",
+    "lib": ["ES2016"],
+    // "moduleResolution": "node16",
+    "allowSyntheticDefaultImports": true,
+    // "resolveJsonModule": true,
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": true,
     "types": [
       "../../node_modules/@figma/plugin-typings"
     ]
   },
-  "files": [
-    "code.ts"
+  "include": [
+    "./code.ts"
+  ],
+  "exclude": [
+    "../../vite.config.ts",
+    "../../vitest.config.ts",
+    "../../node_modules",
+    "../../node_modules/*",
+    "../../src",
+    "../../src/ts/**/*",
+    "../../content/**/*"
   ]
 }
