@@ -6,11 +6,39 @@ export type Coord = {x: number; y: number};
 // TODO: Rename this to "snippet" or "text?"
 export type Quote = string | string[];
 
+/** Special delimiter characters used to denote game state. 
+ * 
+ * ! - "not" when using a flag in a conditional
+ * @ - inventory-id - relates to a given item, either in the player's inventory or the current room
+ * # - player-tag (scoped to the player, to remember stuff that should follow the player)
+ * ## - convo-tag (scoped to current convo when in a conversation)
+ * $ - quest-id  (relates to a quest, either starting it or applying only if that quest is active)
+ * $quest-id:quest-phase  (relates to a given phase of a quest) - if the quest isn't active, nothing happens but if a text line specifies a quest phase it will be tracked for when / if the quest ever actually is active
+ * % - Designates tooltip text in a quote string
+ * ^ - unused
+ * & - unused
+ * * - unused
+ * < - unused
+ * > - a certain flow of the conversation (relates to a conversation step flow)
+ * ? - unused
+ * | - unused
+ * : - used to separate some flags, like $quest:phase - also used in mention, like mention:person
+ * :: - used to separate functional blocks of a quote string
+ * 
+ * + - adds the given thing
+ * - (minus) - removes the given thing
+ * 
+ * . - room-state (scoped to the current room)
+ * 
+*/
+export const FLAG_DELIMITERS = ['##', '#', '>', '@', '.', '$'];
+
 /**
+ * 
  * Quote format:
  *
- * '[speaker]::{[option]}[dialog]::+[add state]-[remove state]%[tooltiptext]'
- * ex: `p::{slow}Here's an example line ![some image](image.svg)::+spoken%Some tooltip`
+ * '[speaker]::{[option]}[dialog]::[state controls]%[tooltiptext]'
+ * ex: `p::{slow}Here's an example line ![some image](image.svg)::+.spoken%Some tooltip`
  *
  * speaker, option, and states are optional
  *
@@ -34,9 +62,17 @@ export type Quote = string | string[];
  * In dialog string,
  *  {{p}} will be replaced by the protagonist's name.
  *  {{pp}} will be the protagonist's full name.
+ *  {{me}} will be the name of whoever the player is in a conversation with
  *  (see utils.ts formatString for details)
  *
- * +/-state will add or remove 'state' to the current room after the quote finishes.
+ * State controls:
+ * Prepend with + or - to add or remove a state using the delimiters above
+ * 
+ * examples:
+ * "::+.room-state" > adds 'room-state' to the current room
+ * "::-.room-state" > removes 'room-state' from the current room
+ * "::+$quest-id" > starts the quest labeled "quest-id"
+ * "::+$quest-id:phase" > initiates the given quest phase
  *
  * Within the text, you can also insert a picture (a file in the assets dir):
  * . . . !\[alt text\](./assets/[whatever]) . . .
@@ -229,17 +265,18 @@ export interface PopupList {
  * Canonical conversation flags
  * These can be used in the condition of a response option
  * These can be appended to a convo step
+ * Add an ! to negate it (#!tag means it counts only if the player doesn't have that tag)
  *
  * ##convo-tag
  * #player-tag
  * >previous-step - this can also be prepended to a step (previous-step>this-step)
- * +inventory-item-id
+ * @inventory-item-id
  * .room-state
  * $quest-id  (visible if this quest is active)
  * $quest-id:quest-phase  (visible if that phase of that quest is active)
  */
 
-type ConvoFlagDelimiter = '##' | '#' | '>' | '+' | '.' | '$';
+type ConvoFlagDelimiter = typeof FLAG_DELIMITERS[number];
 
 type ConvoFlagKey<K extends string> =
   | `${K}${ConvoFlagDelimiter}${string}`
@@ -270,6 +307,7 @@ export interface ConvoResponseOption {
   // goto: 'something' continues the convo at the something path
   goto?: string;
   // Include a conversation flag to trigger a goto under different circumstances
+  // FIXME: This may or may not work or be useful
   [gotoWithFlag: ConvoFlagKey<'goto'>]: string;
 }
 
@@ -277,6 +315,9 @@ export interface ConvoStep {
   text?: Quote;
   responses?: ConvoResponseOption[];
   goto?: string;
+  queue?: Quote[];
+  onQueueFinishGoto?: string;
+  action?: Action;
 }
 
 export interface Convo {

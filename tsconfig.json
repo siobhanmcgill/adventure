@@ -10,7 +10,7 @@
     "esModuleInterop": true,
     "strict": true,
     "types": [
-      "vite/client"
+      "./node_modules/vite/client"
     ]
   }
 }
