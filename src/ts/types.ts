@@ -11,6 +11,7 @@ export type Quote = string | string[];
  * ! - "not" when using a flag in a conditional
  * @ - inventory-id - relates to a given item, either in the player's inventory or the current room
  * # - player-tag (scoped to the player, to remember stuff that should follow the player)
+ *   - # is also used in quotes to designate a visible object
  * ## - convo-tag (scoped to current convo when in a conversation)
  * $ - quest-id  (relates to a quest, either starting it or applying only if that quest is active)
  * $quest-id:quest-phase  (relates to a given phase of a quest) - if the quest isn't active, nothing happens but if a text line specifies a quest phase it will be tracked for when / if the quest ever actually is active
@@ -37,8 +38,8 @@ export const FLAG_DELIMITERS = ['##', '#', '>', '@', '.', '$'];
  * 
  * Quote format:
  *
- * '[speaker]::{[option]}[dialog]::[state controls]%[tooltiptext]'
- * ex: `p::{slow}Here's an example line ![some image](image.svg)::+.spoken%Some tooltip`
+ * '[speaker]::{[option]}[dialog]::[state controls]%%[tooltiptext]'
+ * ex: `p::{slow}Here's an example line ![some image](image.svg)::+.spoken%%Some tooltip`
  *
  * speaker, option, and states are optional
  *
@@ -68,11 +69,19 @@ export const FLAG_DELIMITERS = ['##', '#', '>', '@', '.', '$'];
  * State controls:
  * Prepend with + or - to add or remove a state using the delimiters above
  * 
+ * Multiple controls can be separated with a comma. Each comma-separated command
+ * needs its own '+' or '-'
+ * 
+ * For legacy compatibility (I'm lazy), no delimiter is treated as a room state.
+ * 
  * examples:
  * "::+.room-state" > adds 'room-state' to the current room
  * "::-.room-state" > removes 'room-state' from the current room
- * "::+$quest-id" > starts the quest labeled "quest-id"
+ * "::+@item-id" > adds the given item to the player's inventory
+ * "::+$quest-id" > starts the quest labeled "quest-id" (I don't think - means anything for quests)
  * "::+$quest-id:phase" > initiates the given quest phase
+ * "::+.room-state,+#player-tag" > adds both the room state and the player tag
+ * "::+room-state" > without a delimiter, it is the same as '.'
  *
  * Within the text, you can also insert a picture (a file in the assets dir):
  * . . . !\[alt text\](./assets/[whatever]) . . .
@@ -165,6 +174,7 @@ export interface StateList {
 }
 
 // The verbs the player can do.
+// FIXME: # should be @
 export type ActionOptions = 'look' | 'interact' | 'pickup' | 'talk' | 'sit';
 export type ActionOptionsWithState = `${'name' | ActionOptions}${
   | '.'

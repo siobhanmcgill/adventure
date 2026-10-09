@@ -9,7 +9,7 @@ import {AssetHandler} from './assetHandler';
 import {DEAD_NAME} from './constants';
 import {getRoom} from './lazyLoaders';
 import {ActionOptions, Coord, Room} from './types';
-import {getStorage, setStorage, showActionButtons} from './utils/utils';
+import {getStorage, parseStateControls, setStorage, showActionButtons} from './utils/utils';
 
 export const AGENCY_SAVE_STATE = 'agency_save_state';
 
@@ -174,8 +174,16 @@ export class GameState {
     this.inventorySource.next(items);
   }
 
+  checkInventory(itemId?: string): boolean {
+    if (!itemId) {
+      return false;
+    }
+    return this.inventorySource.value.has(itemId);
+  }
+
   // Load room data for the given room ID. This will include any state from when the player last left there.
   async loadRoomById(roomId: string) {
+    console.log('**** LOAD ROOM', roomId);
     const room = await getRoom(roomId);
     if (!room) {
       console.error('Unable to load the room!?', roomId);
@@ -219,23 +227,16 @@ export class GameState {
     this.roomStatesSource.next(states);
   }
 
-  // Takes a combined string and applies it - +addstate,-removestate
+  checkRoomState(state?: string): boolean {
+    if (!state) {
+      return false;
+    }
+    return this.roomStatesSource.value.includes(state);
+  }
+
+  //Takes a combined string and applies it - +.addstate,#addtag
   parseRoomStateControls(stateControls?: string) {
-    if (!stateControls) {
-      return;
-    }
-    const actions = stateControls.split(',');
-    for (const action of actions) {
-      if (action.charAt(0) === '-') {
-        this.removeRoomState(action.substring(1));
-      } else {
-        let state = action;
-        if (action.charAt(0) === '+') {
-          state = action.substring(1);
-        }
-        this.addRoomState(state);
-      }
-    }
+    parseStateControls(this, stateControls);
   }
 
   // Protagonist information...
@@ -276,6 +277,11 @@ export class GameState {
   // Add a tag.
   addTag(tag: string) {
     this.tags.push(tag);
+    this.save();
+  }
+
+  removeTag(tag: string) {
+    this.tags.splice(this.tags.indexOf(tag), 1);
     this.save();
   }
 

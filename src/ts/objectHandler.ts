@@ -100,7 +100,7 @@ export class ObjectHandler {
         this.game.state.roomStates$,
         this.game.state.room$,
       ]).subscribe(async ([states, roomData]) => {
-        const nameKey = findMatchingKey(this.data, 'name', states);
+        const nameKey = findMatchingKey(this.data, 'name', this.game.state);
 
         const stateWithFilter = Object.entries(roomData.states).find(
           ([key, state]) => states.includes(key) && !!state.objectNameFilter
@@ -169,7 +169,7 @@ export class ObjectHandler {
       combineLatest([this.game.state.roomStates$, this.game.state.room$])
     );
 
-    const nameKey = findMatchingKey(this.data, 'name', states);
+    const nameKey = findMatchingKey(this.data, 'name', this.game.state);
 
     const stateWithFilter = Object.entries(roomData.states).find(
       ([key, state]) => states.includes(key) && !!state.objectNameFilter
@@ -203,7 +203,7 @@ export class ObjectHandler {
     const states = (
       await firstValueFrom(this.game.state.roomStates$)
     ).reverse();
-    let actionName = findMatchingKey(this.data, verb, states);
+    let actionName = findMatchingKey(this.data, verb, this.game.state);
     // If this is acting on another object we have to find an action that matches that.
     // "use on yourself" is the same thing as "use"
     if (

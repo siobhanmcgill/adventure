@@ -1,5 +1,5 @@
 import {firstValueFrom, Observable} from 'rxjs';
-import {ActionType, Coord, Quote, Room} from '../types';
+import {ActionType, Coord, FLAG_DELIMITERS, Quote, Room} from '../types';
 import {DIALOG_TEXT_DURATION, VERSION} from '../constants';
 import {GameState} from '../game-state';
 
@@ -78,35 +78,6 @@ export function queryAll<T extends Element>(
   return (parent ?? document).querySelectorAll(selector);
 }
 
-// TODO: Figure out a way to clear this from outside this context.
-// export function onBodyClick(capture = false) {
-//   return new Promise<void>((resolve) => {
-//     setTimeout(() => {
-//       const fn = (event: Event) => {
-//         if (
-//           (event as KeyboardEvent).key &&
-//           (event as KeyboardEvent).key !== 'Space' &&
-//           (event as KeyboardEvent).key !== 'Enter'
-//         ) {
-//           return;
-//         }
-
-//         if (capture) {
-//           event.preventDefault();
-//           event.stopPropagation();
-//         }
-//         resolve();
-//         document.body.classList.remove('waiting-for-click');
-//         document.body.removeEventListener('click', fn);
-//         document.body.removeEventListener('keypress', fn);
-//       };
-//       document.body.classList.add('waiting-for-click');
-//       document.body.addEventListener('click', fn, {capture, once: true});
-//       document.body.addEventListener('keypress', fn, {capture, once: true});
-//     });
-//   });
-// }
-
 export function disectQuoteString(quote: string) {
   if (quote.startsWith('::')) {
     // This is just a state control.
@@ -121,33 +92,21 @@ export function disectQuoteString(quote: string) {
 
   const matcher =
     // /^(([a-z-_]+)::)?({([a-z-_:, ]+)})?((?:(?!::).)+)(::([a-z-+_]+))?/i;
-    /^(([a-z-_]+)::)?({([a-z-_:0-9, ]+)})?((?:(?!::|%).)+)(::([a-z-+_]+))?(%%(.*))?/i;
+    /^(([a-z-_]+)::)?({([a-z-_:0-9, ]+)})?((?:(?!::|%).)+)(::([a-zA-Z-+_\\.\\#\\$\\@]+))?(%%(.*))?/i;
 
-  /**
-   * p::{slow}Here's an example line::+spoken%Some tooltip
-   * Matching groups:
-   * 0. Entire string
-   * 1. p::
-   * 2. p -           characterId
-   * 3. {slow}        -
-   * 4. slow -        effects
-   * 5.               dialogText
-   * 6. ::+spoken     -
-   * 7. +spoken -     stateControls
-   * 8. %%Some tooltip -
-   * 9.               tooltipText
-   */
   const [
     ,
     ,
-    characterId,
+    // p::{slow}Hey what up?::+.new_state%%Tooltip
+    // 1: 'p::'
+    characterId, // 2: 'p' // 3: '{slow}'
     ,
-    effects,
-    dialogText,
+    effects, // 4: 'slow'
+    dialogText, // 5: 'Hey what up?' // 6: '::+.new_state'
     ,
-    stateControls,
+    stateControls, // 7: '+.new_state' // 8: '%%Tooltip'
     ,
-    tooltipText,
+    tooltipText, // 9: 'Tooltip'
   ] = quote.trim().replaceAll('\n', '').match(matcher) ?? [];
 
   return {
@@ -159,34 +118,63 @@ export function disectQuoteString(quote: string) {
   };
 }
 
+// Takes a state control (as defined in types.ts:69)(nice) and does what it requests.
 export function parseStateControls(state: GameState, stateControls?: string) {
-  const chars = stateControls?.split('');
-  let add: boolean = true;
-  let thisState = '';
-  for (const char of chars ?? []) {
-    if (char === '+' || char === '-') {
-      if (thisState) {
-        if (add) {
-          state.addRoomState(thisState);
-        } else {
-          state.removeRoomState(thisState);
-        }
-        thisState = '';
-      }
-    }
-    if (char === '+') {
-      add = true;
-    } else if (char === '-') {
-      add = false;
-    } else {
-      thisState += char;
-    }
+  if (!stateControls?.trim()) {
+    return;
   }
-  if (thisState) {
-    if (add) {
-      state.addRoomState(thisState);
-    } else {
-      state.removeRoomState(thisState);
+  const commands = stateControls.split(',').map((c) => c.trim());
+  console.log('commands', commands);
+  for (let command of commands) {
+    const add = command.charAt(0) !== '-';
+    if (command.charAt(0) === '-' || command.charAt(0) === '+') {
+      command = command.substring(1);
+    }
+    let action =
+      command.charAt(0) === '#' && command.charAt(1) === '#'
+        ? '##'
+        : command.charAt(0);
+    if (!FLAG_DELIMITERS.includes(action)) {
+      action = '.'
+    }
+    const value = command.replace(action, '');
+    switch (action) {
+      case '##':
+        // TODO: add a conversation tag.
+        console.log('add conversation tag!', value);
+        break;
+      case '#':
+        if (add) {
+          state.addTag(value);
+        } else {
+          state.removeTag(value);
+        }
+        break;
+      case '@':
+        if (add) {
+          state.addToInventory(value);
+        } else {
+          state.removeFromInventory(value);
+        }
+        break;
+      case '.':
+        if (add) {
+          state.addRoomState(value);
+        } else {
+          state.removeRoomState(value);
+        }
+        break;
+      case '$':
+        if (add) {
+          // TODO: start a quest!
+        } else {
+          // TODO: end a quest?
+          // I don't think -$quest-id does anything
+        }
+        break;
+      default:
+        // Do nothing if we don't recognize it.
+        break;
     }
   }
 }
@@ -279,20 +267,45 @@ export function htmlToNode<T extends HTMLElement | SVGElement>(
   return template.content.firstChild as T;
 }
 
+// Find a key within an object which best matches the current state.
+// For example, if an object contains both "default" and "default.amaze"
+// If the 'amaze' state is active, that key will be returned.
 export function findMatchingKey<
-  T extends {[index in string | `${string}.${string}`]: unknown}
->(data: T, base: string, states: string[]): keyof T {
-  const keys = Object.keys(data) as Array<keyof T>;
-  let matchingKey: keyof T = base;
-  states.some((s) => {
-    const thisAction: keyof T = `${base}.${s}`;
-    const pass = keys.includes(thisAction);
-    if (pass) {
-      matchingKey = thisAction;
+  T extends {[index in string | ConvoFlagKey<string>]: unknown}
+>(data: T, base: string, gameState: GameState): keyof T {
+  const keys = Object.keys(data); // as Array<keyof T>;
+  for (const key of keys) {
+    // First check the base
+    if (key.startsWith(base)) {
+      if (key.includes('##')) {
+        // TODO: check for active conversation tags.
+      } else if (
+        key.includes('#') &&
+        gameState.countTag(key.split('#')[1]) > 0
+      ) {
+        // If the key is like 'default#tag' and the player has the #tag, this is it!
+        return key;
+        break;
+      } else if (key.includes('>')) {
+        // TODO: check for the conversation flow.
+      } else if (
+        key.includes('@') &&
+        gameState.checkInventory(key.split('@')[1])
+      ) {
+        // If the key is like 'default@item' and the player has that item, this is it!
+        return key;
+      } else if (
+        key.includes('.') &&
+        gameState.checkRoomState(key.split('.')[1])
+      ) {
+        // If the key is like 'default.state' and the room has 'state', this is it!
+        return key;
+      } else if (key.includes('$')) {
+        // TODO: check for the quest status.
+      }
     }
-    return pass;
-  });
-  return matchingKey;
+  }
+  return base;
 }
 
 /**

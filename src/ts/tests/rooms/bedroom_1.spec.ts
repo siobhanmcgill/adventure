@@ -366,6 +366,9 @@ describe('bedroom_1', () => {
             },
             act: async () => {
               await command(game, 'open the door');
+              await flush();
+              document.body.click();
+              await flush();
             },
             assert: async () => {
               const currentRoom = await firstValueFrom(game.state.room$);

@@ -128,7 +128,7 @@ export async function expectPopup(popup: Popup, gameState: GameState) {
 
   expect(getEl('svg .popup-wrapper')).toHaveClass(popup.popupStyle);
   expect(getEl('svg .popup-wrapper .popup .text')).toContainHTML(
-    formatString(popup.text, gameState)
+    formatString(popup.popupContent, gameState)
   );
   await userEvent.click(page.getEl('body'));
   await vi.runAllTimersAsync();

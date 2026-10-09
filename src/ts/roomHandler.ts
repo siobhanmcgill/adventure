@@ -211,7 +211,7 @@ export class RoomHandler<ContainerType extends SVGElement | HTMLElement> {
       const states = await firstValueFrom(this.game.state.roomStates$);
       const name = room.name
         ? formatString(
-            room.name[findMatchingKey(room.name, 'default', states)],
+            room.name[findMatchingKey(room.name, 'default', this.game.state)],
             this.game.state
           )
         : 'Room';
@@ -287,7 +287,7 @@ export class RoomHandler<ContainerType extends SVGElement | HTMLElement> {
         [];
     } else {
       const states = await firstValueFrom(this.game.state.roomStates$);
-      const key = findMatchingKey(room.enter, 'default', states);
+      const key = findMatchingKey(room.enter, 'default', this.game.state);
       quote = room.enter[key]?.text ?? room.enter[key]?.quote ?? [];
 
       // if (!isFirstTime && this.game.state.isDebug()) {
